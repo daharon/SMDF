@@ -32,4 +32,9 @@ interface Check {
      * TODO: Come up with a data structure for this.
      */
     val subdue: String
+
+    /**
+     * Execute the check operation.
+     */
+    fun run()
 }

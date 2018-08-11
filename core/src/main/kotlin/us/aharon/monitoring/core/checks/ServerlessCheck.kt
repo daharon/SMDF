@@ -4,11 +4,11 @@ import us.aharon.monitoring.core.handlers.Handler
 
 
 /**
- * Client-side check.
+ * AWS Lambda check.
  *
- * A check that will be pushed to the queue for a client-side subscriber to execute remotely.
+ * A check that will be executed as an AWS Lambda function, independent of clients.
  */
-class ClientCheck : Check {
+class ServerlessCheck : Check {
     override val interval: Int = 10
     override val notification: String = "Notification not set"
     override val handlers: List<Handler> = emptyList()
@@ -24,23 +24,10 @@ class ClientCheck : Check {
      * Check command to run.
      * Default value forces a CRITICAL state.
      */
-    val command: String = "exit 2"
-    /**
-     * Tags used to route checks to the appropriate clients.
-     */
-    val subscribers: List<String> = emptyList()
-    /**
-     * This check is not triggered by the monitoring application.
-     * The check results are reported asynchronously.
-     */
-    val volatile: Boolean = false
-    /**
-     * Time to live in seconds before the check is automatically deleted from the queue.
-     */
-    val ttl: Int = 90
+    val command: Any = Unit // TODO: Create an interface for user implemented check classes.
 
 
     override fun run() {
-        TODO("Push the configured check to the queue.")
+        TODO("Invoke the configured check as an AWS Lambda function.")
     }
 }
