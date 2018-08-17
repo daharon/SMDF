@@ -5,7 +5,6 @@ import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 
-
 import us.aharon.monitoring.core.events.NotificationEvent
 import us.aharon.monitoring.core.http.RegistrationRequest
 import us.aharon.monitoring.core.http.RegistrationResponse
@@ -14,13 +13,14 @@ import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
 
 
-interface Application {
+abstract class Application {
 
-    val checks: List<CheckGroup>
-    val filters: List<Filter>
-    val mutators: List<Mutator>
+    abstract val checks: List<CheckGroup>
+    abstract val filters: List<Filter>
+    abstract val mutators: List<Mutator>
 
     companion object {
+        @JvmStatic
         fun main(vararg args: String) {
             println("This function will generate the CloudFormation stack template and install itself to an AWS account.")
         }

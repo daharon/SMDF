@@ -7,7 +7,7 @@ import us.aharon.monitoring.core.mutators.Mutator
 import us.aharon.monitoring.example.checks.SYSTEM_CHECKS
 
 
-class App : Application {
+class App : Application() {
 
     override val checks = listOf(
             SYSTEM_CHECKS
