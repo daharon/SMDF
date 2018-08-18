@@ -11,8 +11,20 @@ import us.aharon.monitoring.core.http.RegistrationResponse
 import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
+import us.aharon.monitoring.core.util.CLIArgs
+import us.aharon.monitoring.core.util.renderCloudFormationTemplate
 
 
+/**
+ * Base class for the monitoring application.
+ * Extend this class and override its members in the project implementation.
+ * ```
+ * class MyMonitoringApp : Application() { ... }
+ * ```
+ * Provides the following:
+ * - Command-line executable that performs installation of the monitoring application.
+ * - Serverless function handlers.
+ */
 abstract class Application {
 
     abstract val checks: List<CheckGroup>
@@ -22,7 +34,23 @@ abstract class Application {
     companion object {
         @JvmStatic
         fun main(vararg args: String) {
-            println("This function will generate the CloudFormation stack template and install itself to an AWS account.")
+            // Parse command line parameters.
+            val options = CLIArgs(args)
+
+            // Generate/render CloudFormation template.
+            val cfnTemplate = renderCloudFormationTemplate(this::class, options)
+            println("Rendered CloudFormation Template:")
+            println(cfnTemplate)
+
+            // Validate CloudFormation template.
+
+            // Upload JAR to S3 bucket specified in command-line parameter.
+
+            // Upload CloudFormation template to S3 bucket.
+
+            // Create or update CloudFormation stack.  Stack name provided by command-line parameter.
+
+            // Poll for stack creation/update status.
         }
     }
 

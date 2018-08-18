@@ -1,0 +1,66 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Monitoring
+
+Resources:
+
+  ##
+  # Lambda Functions
+  ##
+  MonitoringClientRegistration:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Register clients with the monitoring system.
+      Runtime: java8
+      Handler: '${clientRegistrationHandler}'
+      #      CodeUri: !Ref CodeUri
+      #      CodeUri: ./target/alert-backend-0.1.29.jar
+      CodeUri: s3://us-monitoring/dev/code/monitoring-0.1.0.jar
+      Role: !GetAtt MonitoringClientRegistrationRole.Arn
+      Timeout: 60
+      MemorySize: 512
+      Tags:
+        App: Monitoring
+#      Events:
+#        SES:
+#          Type: SNS
+#          Properties:
+#            Topic: arn:aws:sns:us-east-1:746986273951:email-alert-kapchr
+
+  ##
+  # IAM Roles
+  ##
+  MonitoringClientRegistrationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /monitoring/
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+#      - PolicyName: SNSTopics
+#        PolicyDocument:
+#          Version: 2012-10-17
+#          Statement:
+#          - Effect: Allow
+#            Action:
+#            - sns:Publish
+#            Resource:
+#            - !Ref ButtinskiAlertSNSTopic
+
+  ##
+  # SNS Topics
+  ##
+#  ButtinskiAlertSNSTopic:
+#    Type: AWS::SNS::Topic
+#    Properties:
+#      DisplayName: buttinski-alerts
