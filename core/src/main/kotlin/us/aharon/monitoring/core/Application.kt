@@ -4,10 +4,14 @@
 
 package us.aharon.monitoring.core
 
+import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
+import com.amazonaws.services.cloudformation.model.AmazonCloudFormationException
+import com.amazonaws.services.cloudformation.model.ValidateTemplateRequest
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
+import freemarker.template.Configuration as TemplateConfiguration
 
 import us.aharon.monitoring.core.events.NotificationEvent
 import us.aharon.monitoring.core.http.RegistrationRequest
@@ -16,7 +20,9 @@ import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
 import us.aharon.monitoring.core.util.CLIArgs
-import us.aharon.monitoring.core.util.renderCloudFormationTemplate
+
+import java.io.StringWriter
+import kotlin.system.exitProcess
 
 
 /**
@@ -35,27 +41,12 @@ abstract class Application {
     abstract val filters: List<Filter>
     abstract val mutators: List<Mutator>
 
+
     companion object {
-        @JvmStatic
-        fun main(vararg args: String) {
-            // Parse command line parameters.
-            val options = CLIArgs(args)
-
-            // Generate/render CloudFormation template.
-            val cfnTemplate = renderCloudFormationTemplate(this::class, options)
-            println("Rendered CloudFormation Template:")
-            println(cfnTemplate)
-
-            // Validate CloudFormation template.
-
-            // Upload JAR to S3 bucket specified in command-line parameter.
-
-            // Upload CloudFormation template to S3 bucket.
-
-            // Create or update CloudFormation stack.  Stack name provided by command-line parameter.
-
-            // Poll for stack creation/update status.
-        }
+        /**
+         * CloudFormation template filename from the package's resources directory.
+         */
+        private const val CLOUDFORMATION_TEMPLATE = "cloudformation.yaml"
     }
 
     /**
@@ -109,5 +100,74 @@ abstract class Application {
      */
     fun notificationHandler(event: NotificationEvent, context: Context) {
         TODO("Run the notification handler class.")
+    }
+
+    /**
+     * Entry point for the CLI.
+     * In your application use like so:
+     * ```
+     * class MyMonitoringApp : Application() { ... }
+     *
+     * fun main(vararg args: String) {
+     *     MyMonitoringApp().run(args)
+     * }
+     * ```
+     */
+    fun run(args: Array<out String>) {
+        // Parse command line parameters.
+        val options = CLIArgs(args)
+
+        // Generate/render CloudFormation template.
+        val cfnTemplate = renderCloudFormationTemplate(options)
+        println("Rendered CloudFormation Template:")
+        println(cfnTemplate)
+
+        // Validate CloudFormation template.
+        validateCloudFormationTemplate(cfnTemplate)
+
+        // Upload JAR to S3 bucket specified in command-line parameter.
+
+        // Upload CloudFormation template to S3 bucket.
+
+        // Create or update CloudFormation stack.  Stack name provided by command-line parameter.
+
+        // Poll for stack creation/update status.
+    }
+
+    /**
+     * Render the CloudFormation template.
+     *
+     * @param config Configuration variables.
+     */
+    private fun renderCloudFormationTemplate(options: CLIArgs): String {
+        val templateConfig = TemplateConfiguration(TemplateConfiguration.VERSION_2_3_28).apply {
+            setClassForTemplateLoading(this::class.java, "/")
+            defaultEncoding = "UTF-8"
+        }
+        val templateCfn = templateConfig.getTemplate(CLOUDFORMATION_TEMPLATE)
+        val templateData = mapOf<String, Any>(
+                // TODO:  Figure out how to get the canonical name of the class that extends [Application].
+                "clientRegistrationHandler" to "${this::class.java.canonicalName}::${this::clientRegistrationHandler.name}"
+        )
+        val renderedTemplate = StringWriter()
+        templateCfn.process(templateData, renderedTemplate)
+        return renderedTemplate.toString()
+    }
+
+    /**
+     * Validate the CloudFormation template.
+     *
+     * @param template CloudFormation template to validate.
+     */
+    private fun validateCloudFormationTemplate(template: String) {
+        val request = ValidateTemplateRequest().withTemplateBody(template)
+        val client = AmazonCloudFormationClientBuilder.defaultClient()
+        try {
+            client.validateTemplate(request)
+            println("CloudFormation template is valid.")
+        } catch (e: AmazonCloudFormationException) {
+            println(e.message)
+            exitProcess(1)
+        }
     }
 }
