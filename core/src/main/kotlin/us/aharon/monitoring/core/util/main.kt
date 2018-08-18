@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018 Daniel Aharon
+ */
+
 package us.aharon.monitoring.core.util
 
 import freemarker.template.Configuration as TemplateConfiguration

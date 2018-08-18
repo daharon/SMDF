@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018 Daniel Aharon
+ */
+
 package us.aharon.monitoring.core
 
 import com.amazonaws.services.lambda.runtime.Context

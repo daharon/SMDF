@@ -1,0 +1,7 @@
+<component name="CopyrightManager">
+  <copyright>
+    <option name="keyword" value="Copyright (c) \d{4}" />
+    <option name="notice" value="Copyright (c) &amp;#36;today.year Daniel Aharon " />
+    <option name="myName" value="Daniel Aharon" />
+  </copyright>
+</component>

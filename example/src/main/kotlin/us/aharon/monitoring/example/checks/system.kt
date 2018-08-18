@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018 Daniel Aharon
+ */
+
 package us.aharon.monitoring.example.checks
 
 import us.aharon.monitoring.core.checks.checks
