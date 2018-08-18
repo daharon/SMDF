@@ -21,6 +21,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="monitoring.example" target="1.8" />
       <module name="monitoring.core" target="1.8" />
     </bytecodeTargetLevel>
   </component>
