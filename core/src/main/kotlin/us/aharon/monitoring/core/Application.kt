@@ -5,8 +5,7 @@
 package us.aharon.monitoring.core
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
-import com.amazonaws.services.cloudformation.model.AmazonCloudFormationException
-import com.amazonaws.services.cloudformation.model.ValidateTemplateRequest
+import com.amazonaws.services.cloudformation.model.*
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent
@@ -25,11 +24,8 @@ import us.aharon.monitoring.core.util.getJarAbsolutePath
 import us.aharon.monitoring.core.util.getJarFilename
 
 import java.io.StringWriter
-import java.nio.file.Paths
 import java.io.File
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 
@@ -140,10 +136,51 @@ abstract class Application {
 
         // Upload CloudFormation template to S3 bucket.
         val cfnTemplateS3Key = uploadCloudFormationTemplate(cfnTemplate, options)
+        TimeUnit.SECONDS.sleep(5)  // Wait for S3, just in case.
 
         // Create or update CloudFormation stack.  Stack name provided by command-line parameter.
+        createCloudFormationStack(options.get("stack-name"), options.get("s3-dest"), cfnTemplateS3Key, options.get("region"))
 
         // Poll for stack creation/update status.
+    }
+
+    /**
+     * Create or update the CloudFormation stack.
+     *
+     * @param stackName The name of the CloudFormation stack.
+     * @param template The S3 file that contains the CloudFormation template.
+     * @param region The AWS region.
+     */
+    private fun createCloudFormationStack(stackName: String, s3Bucket: String, template: String, region: String) {
+        val cfnClient = AmazonCloudFormationClientBuilder.standard()
+                .withRegion(region)
+                .build()
+        val stackExists: Boolean = try {
+            val describeStackRequest = DescribeStacksRequest().withStackName(stackName)
+            cfnClient.describeStacks(describeStackRequest)
+            println("The `$stackName` stack already exists.")
+            true
+        } catch (e: AmazonCloudFormationException) {
+            println("The `$stackName` stack does not exist.")
+            false
+        }
+        val templateUrl = "https://s3.amazonaws.com/$s3Bucket/$template"
+        println("Template URL:  $templateUrl")
+        if (stackExists) {
+            val updateRequest = UpdateStackRequest()
+                    .withStackName(stackName)
+                    .withTemplateURL(templateUrl)
+                    .withCapabilities(Capability.CAPABILITY_IAM)
+            println("Updating the stack named `$stackName`...")
+            cfnClient.updateStack(updateRequest)
+        } else {
+            val createRequest = CreateStackRequest()
+                    .withStackName(stackName)
+                    .withTemplateURL(templateUrl)
+                    .withCapabilities(Capability.CAPABILITY_IAM)
+            println("Creating the stack named `$stackName`...")
+            cfnClient.createStack(createRequest)
+        }
     }
 
     /**
@@ -154,7 +191,7 @@ abstract class Application {
      * @return Template S3 path/key.
      */
     private fun uploadCloudFormationTemplate(template: String, options: CLIArgs): String {
-        val templateFilename = "cfn-template-${ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)}.yaml"
+        val templateFilename = "cfn-template-${System.currentTimeMillis()}.yaml"
         val s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(options.get("region"))
                 .build()
@@ -191,7 +228,8 @@ abstract class Application {
         val templateData = mapOf<String, Any>(
                 // TODO:  Figure out how to get the canonical name of the class that extends [Application].
                 "clientRegistrationHandler" to "${this::class.java.canonicalName}::${this::clientRegistrationHandler.name}",
-                "codeUri" to Paths.get(options.get("s3-dest"), getJarFilename(this::class))
+                "codeS3Bucket" to options.get("s3-dest"),
+                "codeS3Key" to getJarFilename(this::class)
         )
         val renderedTemplate = StringWriter()
         templateCfn.process(templateData, renderedTemplate)
