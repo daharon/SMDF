@@ -18,9 +18,15 @@ class App : Application() {
     )
     override val filters = emptyList<Filter>()
     override val mutators = emptyList<Mutator>()
-}
 
 
-fun main(vararg args: String) {
-    App().run(args)
+    companion object {
+        /**
+         * CLI entry point.
+         */
+        @JvmStatic
+        fun main(vararg args: String) {
+            App().run(args)
+        }
+    }
 }

@@ -32,6 +32,8 @@ internal class CLIArgs(private val args: Array<out String>)  : Options() {
                 "S3 Bucket and path as upload destination. (s3://bucket/path)")
         addRequiredOption("n", "stack-name", true,
                 "CloudFormation Stack name")
+        addRequiredOption("r", "region", true,
+                "AWS region")
 
         try {
             options = DefaultParser().parse(this, args)

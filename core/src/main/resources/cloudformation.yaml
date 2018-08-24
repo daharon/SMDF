@@ -14,9 +14,7 @@ Resources:
       Description: Register clients with the monitoring system.
       Runtime: java8
       Handler: '${clientRegistrationHandler}'
-      #      CodeUri: !Ref CodeUri
-      #      CodeUri: ./target/alert-backend-0.1.29.jar
-      CodeUri: s3://us-monitoring/dev/code/monitoring-0.1.0.jar
+      CodeUri: ${codeUri}
       Role: !GetAtt MonitoringClientRegistrationRole.Arn
       Timeout: 60
       MemorySize: 512

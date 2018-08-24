@@ -11,6 +11,7 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import freemarker.template.Configuration as TemplateConfiguration
 
 import us.aharon.monitoring.core.events.NotificationEvent
@@ -20,8 +21,15 @@ import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
 import us.aharon.monitoring.core.util.CLIArgs
+import us.aharon.monitoring.core.util.getJarAbsolutePath
+import us.aharon.monitoring.core.util.getJarFilename
 
 import java.io.StringWriter
+import java.nio.file.Paths
+import java.io.File
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.system.exitProcess
 
 
@@ -58,9 +66,11 @@ abstract class Application {
      * @return Client SQS queue for receiving scheduled checks.  Success or failure is returned based on response code.
      */
     fun clientRegistrationHandler(request: RegistrationRequest, context: Context): RegistrationResponse {
-        TODO("Implement client registration")
+        println("Client Name:  ${request.clientName}")
+        println("Client Tags:  ${request.clientTags}")
         return RegistrationResponse(
                 "arn:aws:sqs:region:account-id:queuename")
+        TODO("Implement client registration")
     }
 
     /**
@@ -126,8 +136,10 @@ abstract class Application {
         validateCloudFormationTemplate(cfnTemplate)
 
         // Upload JAR to S3 bucket specified in command-line parameter.
+        uploadJarFile(options)
 
         // Upload CloudFormation template to S3 bucket.
+        val cfnTemplateS3Key = uploadCloudFormationTemplate(cfnTemplate, options)
 
         // Create or update CloudFormation stack.  Stack name provided by command-line parameter.
 
@@ -135,9 +147,40 @@ abstract class Application {
     }
 
     /**
+     * Upload CloudFormation template.
+     *
+     * @param template CloudFormation template.
+     * @param options Configuration variables.
+     * @return Template S3 path/key.
+     */
+    private fun uploadCloudFormationTemplate(template: String, options: CLIArgs): String {
+        val templateFilename = "cfn-template-${ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)}.yaml"
+        val s3Client = AmazonS3ClientBuilder.standard()
+                .withRegion(options.get("region"))
+                .build()
+        s3Client.putObject(options.get("s3-dest"), templateFilename, template)
+        return templateFilename
+    }
+
+    /**
+     * Upload the JAR file.
+     *
+     * @param options Configuration variables.
+     */
+    private fun uploadJarFile(options: CLIArgs) {
+        val jarPath = getJarAbsolutePath(this::class)
+        val jarName = getJarFilename(this::class)
+        println("JAR Absolute Path: $jarPath")
+        val s3Client = AmazonS3ClientBuilder.standard()
+                .withRegion(options.get("region"))
+                .build()
+        s3Client.putObject(options.get("s3-dest"), jarName, File(jarPath))
+    }
+
+    /**
      * Render the CloudFormation template.
      *
-     * @param config Configuration variables.
+     * @param options Configuration variables.
      */
     private fun renderCloudFormationTemplate(options: CLIArgs): String {
         val templateConfig = TemplateConfiguration(TemplateConfiguration.VERSION_2_3_28).apply {
@@ -147,7 +190,8 @@ abstract class Application {
         val templateCfn = templateConfig.getTemplate(CLOUDFORMATION_TEMPLATE)
         val templateData = mapOf<String, Any>(
                 // TODO:  Figure out how to get the canonical name of the class that extends [Application].
-                "clientRegistrationHandler" to "${this::class.java.canonicalName}::${this::clientRegistrationHandler.name}"
+                "clientRegistrationHandler" to "${this::class.java.canonicalName}::${this::clientRegistrationHandler.name}",
+                "codeUri" to Paths.get(options.get("s3-dest"), getJarFilename(this::class))
         )
         val renderedTemplate = StringWriter()
         templateCfn.process(templateData, renderedTemplate)
