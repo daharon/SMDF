@@ -14,10 +14,9 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import freemarker.template.Configuration as TemplateConfiguration
 
 import us.aharon.monitoring.core.events.NotificationEvent
-import us.aharon.monitoring.core.http.RegistrationRequest
-import us.aharon.monitoring.core.http.RegistrationResponse
 import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.filters.Filter
+import us.aharon.monitoring.core.http.ClientRegistrationHandler
 import us.aharon.monitoring.core.mutators.Mutator
 import us.aharon.monitoring.core.util.CLIArgs
 import us.aharon.monitoring.core.util.getJarAbsolutePath
@@ -51,22 +50,6 @@ abstract class Application {
          * CloudFormation template filename from the package's resources directory.
          */
         private const val CLOUDFORMATION_TEMPLATE = "cloudformation.yaml"
-    }
-
-    /**
-     * API Gateway handler that registers a client for monitoring.
-     *
-     * - Verify that the client name is unique.
-     * - Create SQS queue for the client subscriber with a filter based on the client's provided tags.
-     *
-     * @return Client SQS queue for receiving scheduled checks.  Success or failure is returned based on response code.
-     */
-    fun clientRegistrationHandler(request: RegistrationRequest, context: Context): RegistrationResponse {
-        println("Client Name:  ${request.clientName}")
-        println("Client Tags:  ${request.clientTags}")
-        return RegistrationResponse(
-                "arn:aws:sqs:region:account-id:queuename")
-        TODO("Implement client registration")
     }
 
     /**
@@ -227,7 +210,9 @@ abstract class Application {
         val templateCfn = templateConfig.getTemplate(CLOUDFORMATION_TEMPLATE)
         val templateData = mapOf<String, Any>(
                 // TODO:  Figure out how to get the canonical name of the class that extends [Application].
-                "clientRegistrationHandler" to "${this::class.java.canonicalName}::${this::clientRegistrationHandler.name}",
+                //"clientRegistrationHandler" to "${this::class.java.canonicalName}::${this::clientRegistrationRequest.name}",
+                "clientRegistrationHandler" to
+                        "${ClientRegistrationHandler::class.java.canonicalName}::${ClientRegistrationHandler::handleRequest.name}",
                 "codeS3Bucket" to options.get("s3-dest"),
                 "codeS3Key" to getJarFilename(this::class)
         )

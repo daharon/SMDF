@@ -5,6 +5,6 @@
 package us.aharon.monitoring.core.http
 
 
-data class RegistrationResponse(
+data class ClientRegistrationResponse(
         val clientQueue: String?
 )
