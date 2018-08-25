@@ -36,8 +36,8 @@ Resources:
       Timeout: 60
       MemorySize: 512
       Tags:
-      - Key: App
-        Value: Monitoring
+        - Key: App
+          Value: Monitoring
 
   ##
   # IAM Roles
@@ -57,42 +57,43 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
-#      Policies:
-#      - PolicyName: SNSTopics
-#        PolicyDocument:
-#          Version: 2012-10-17
-#          Statement:
-#          - Effect: Allow
-#            Action:
-#            - sns:Publish
-#            Resource:
-#            - !Ref MonitoringAlertSNSTopic
 
   MonitoringCheckSchedulerRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /monitoring/
       ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
         - Effect: Allow
           Principal:
             Service:
-            - lambda.amazonaws.com
+              - lambda.amazonaws.com
           Action:
-          - sts:AssumeRole
-  #      Policies:
-  #      - PolicyName: SNSTopics
-  #        PolicyDocument:
-  #          Version: 2012-10-17
-  #          Statement:
-  #          - Effect: Allow
-  #            Action:
-  #            - sns:Publish
-  #            Resource:
-  #            - !Ref MonitoringAlertSNSTopic
+            - sts:AssumeRole
+
+  ##
+  # Scheduled Events
+  ##
+  MonitoringCheckSchedulerEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Monitoring check scheduler event rule.
+      ScheduleExpression: rate(1 minute)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt MonitoringCheckScheduler.Arn
+          Id: MonitoringCheckScheduler
+
+  MonitoringCheckSchedulerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MonitoringCheckScheduler
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt MonitoringCheckSchedulerEventRule.Arn
 
   ##
   # SNS Topics

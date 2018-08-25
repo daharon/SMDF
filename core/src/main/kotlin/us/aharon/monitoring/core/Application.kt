@@ -61,6 +61,7 @@ abstract class Application {
      * Requires the ARN of the SNS Check Fanout topic.
      */
     fun checkScheduler(event: ScheduledEvent, context: Context) {
+        println("Event Time:  ${event.time}")
         println("Detail Type:  ${event.detailType}")
         println("Detail:  ${event.detail}")
         println("Resources:  ${event.resources}")
