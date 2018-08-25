@@ -1,6 +1,5 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-#Transform: AWS::Serverless-2016-10-31
 Description: Monitoring
 
 Resources:
@@ -23,11 +22,22 @@ Resources:
       Tags:
         - Key: App
           Value: Monitoring
-#      Events:
-#        SES:
-#          Type: SNS
-#          Properties:
-#            Topic: arn:aws:sns:us-east-1:746986273951:email-alert-kapchr
+
+  MonitoringCheckScheduler:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Fire events to the SNS Fanout Topic.
+      Runtime: java8
+      Handler: '${checkSchedulerHandler}'
+      Code:
+        S3Bucket: '${codeS3Bucket}'
+        S3Key: '${codeS3Key}'
+      Role: !GetAtt MonitoringCheckSchedulerRole.Arn
+      Timeout: 60
+      MemorySize: 512
+      Tags:
+      - Key: App
+        Value: Monitoring
 
   ##
   # IAM Roles
@@ -56,12 +66,38 @@ Resources:
 #            Action:
 #            - sns:Publish
 #            Resource:
-#            - !Ref ButtinskiAlertSNSTopic
+#            - !Ref MonitoringAlertSNSTopic
+
+  MonitoringCheckSchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /monitoring/
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+  #      Policies:
+  #      - PolicyName: SNSTopics
+  #        PolicyDocument:
+  #          Version: 2012-10-17
+  #          Statement:
+  #          - Effect: Allow
+  #            Action:
+  #            - sns:Publish
+  #            Resource:
+  #            - !Ref MonitoringAlertSNSTopic
 
   ##
   # SNS Topics
   ##
-#  ButtinskiAlertSNSTopic:
+#  MonitoringAlertSNSTopic:
 #    Type: AWS::SNS::Topic
 #    Properties:
 #      DisplayName: buttinski-alerts

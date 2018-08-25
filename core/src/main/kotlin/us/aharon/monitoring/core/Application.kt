@@ -61,6 +61,10 @@ abstract class Application {
      * Requires the ARN of the SNS Check Fanout topic.
      */
     fun checkScheduler(event: ScheduledEvent, context: Context) {
+        println("Detail Type:  ${event.detailType}")
+        println("Detail:  ${event.detail}")
+        println("Resources:  ${event.resources}")
+        return
         TODO("Implement check scheduler to fire events.")
     }
 
@@ -210,9 +214,9 @@ abstract class Application {
         val templateCfn = templateConfig.getTemplate(CLOUDFORMATION_TEMPLATE)
         val templateData = mapOf<String, Any>(
                 // TODO:  Figure out how to get the canonical name of the class that extends [Application].
-                //"clientRegistrationHandler" to "${this::class.java.canonicalName}::${this::clientRegistrationRequest.name}",
                 "clientRegistrationHandler" to
                         "${ClientRegistrationHandler::class.java.canonicalName}::${ClientRegistrationHandler::handleRequest.name}",
+                "checkSchedulerHandler" to "${this::class.java.canonicalName}::${this::checkScheduler.name}",
                 "codeS3Bucket" to options.get("s3-dest"),
                 "codeS3Key" to getJarFilename(this::class)
         )
