@@ -35,7 +35,6 @@
         </dependency>
 
         <!-- Logging -->
-        <!--
         <dependency>
             <groupId>io.github.microutils</groupId>
             <artifactId>kotlin-logging</artifactId>
@@ -46,7 +45,6 @@
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.25</version>
         </dependency>
-        -->
 
         <!-- AWS -->
         <dependency>

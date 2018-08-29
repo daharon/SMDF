@@ -12,6 +12,8 @@ import com.amazonaws.services.lambda.runtime.events.ScheduledEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import freemarker.template.Configuration as TemplateConfiguration
+import mu.KLogger
+import mu.KotlinLogging
 
 import us.aharon.monitoring.core.events.NotificationEvent
 import us.aharon.monitoring.core.checks.CheckGroup
@@ -44,6 +46,8 @@ abstract class Application {
     abstract val filters: List<Filter>
     abstract val mutators: List<Mutator>
 
+    protected val log: KLogger by lazy { KotlinLogging.logger(this::class.java.name) }
+
 
     companion object {
         /**
@@ -61,10 +65,10 @@ abstract class Application {
      * Requires the ARN of the SNS Check Fanout topic.
      */
     fun checkScheduler(event: ScheduledEvent, context: Context) {
-        println("Event Time:  ${event.time}")
-        println("Detail Type:  ${event.detailType}")
-        println("Detail:  ${event.detail}")
-        println("Resources:  ${event.resources}")
+        log.info { "Event Time:  ${event.time}" }
+        log.info { "Detail Type:  ${event.detailType}" }
+        log.info { "Detail:  ${event.detail}" }
+        log.info { "Resources:  ${event.resources}" }
         return
         TODO("Implement check scheduler to fire events.")
     }
@@ -247,7 +251,7 @@ abstract class Application {
     private fun uploadJarFile(options: CLIArgs) {
         val jarPath = getJarAbsolutePath(this::class)
         val jarName = getJarFilename(this::class)
-        println("JAR Absolute Path: $jarPath")
+        println("Uploading $jarPath")
         val s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(options.get("region"))
                 .build()
