@@ -130,6 +130,58 @@ abstract class Application {
         createCloudFormationStack(options.get("stack-name"), options.get("s3-dest"), cfnTemplateS3Key, options.get("region"))
 
         // Poll for stack creation/update status.
+        pollCloudFormationStackStatus(options.get("stack-name"), options.get("region"))
+    }
+
+    /**
+     * Print the stack creation/update status until an end state is reached.
+     *
+     * @param stackName The name of the CloudFormation stack.
+     * @param region The AWS region.
+     */
+    private fun pollCloudFormationStackStatus(stackName: String, region: String) {
+        val cfnClient = AmazonCloudFormationClientBuilder.standard()
+                .withRegion(region)
+                .build()
+        while (true) {
+            val stacksResult = cfnClient.describeStacks()
+            val stack = stacksResult.stacks.firstOrNull()
+            if (stack == null) {
+                println("Stack `$stackName` not found.")
+            } else {
+                when (StackStatus.fromValue(stack.stackStatus)) {
+                    StackStatus.CREATE_COMPLETE,
+                    StackStatus.DELETE_COMPLETE,
+                    StackStatus.ROLLBACK_COMPLETE,
+                    StackStatus.UPDATE_COMPLETE,
+                    StackStatus.UPDATE_ROLLBACK_COMPLETE -> {
+                        println("Stack `$stackName` status:  ${stack.stackStatus}")
+                        return
+                    }
+                    StackStatus.CREATE_IN_PROGRESS,
+                    StackStatus.DELETE_IN_PROGRESS,
+                    StackStatus.REVIEW_IN_PROGRESS,
+                    StackStatus.ROLLBACK_IN_PROGRESS,
+                    StackStatus.UPDATE_COMPLETE_CLEANUP_IN_PROGRESS,
+                    StackStatus.UPDATE_IN_PROGRESS,
+                    StackStatus.UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS,
+                    StackStatus.UPDATE_ROLLBACK_IN_PROGRESS -> {
+                        println("Stack `$stackName` status:  ${stack.stackStatus}")
+                        TimeUnit.SECONDS.sleep(5)
+                    }
+                    StackStatus.CREATE_FAILED,
+                    StackStatus.DELETE_FAILED,
+                    StackStatus.ROLLBACK_FAILED,
+                    StackStatus.UPDATE_ROLLBACK_FAILED -> {
+                        println("Stack `$stackName` status:  ${stack.stackStatus} - ${stack.stackStatusReason}")
+                        return
+                    }
+                    null -> {
+                        println("Stack `$stackName` status is NULL.")
+                    }
+                }
+            }
+        }
     }
 
     /**
