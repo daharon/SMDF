@@ -46,7 +46,7 @@ abstract class Application {
     abstract val filters: List<Filter>
     abstract val mutators: List<Mutator>
 
-    protected val log: KLogger by lazy { KotlinLogging.logger(this::class.java.name) }
+    protected val log: KLogger by lazy { KotlinLogging.logger(this::class.java.simpleName) }
 
 
     companion object {
@@ -69,8 +69,7 @@ abstract class Application {
         log.info { "Detail Type:  ${event.detailType}" }
         log.info { "Detail:  ${event.detail}" }
         log.info { "Resources:  ${event.resources}" }
-        return
-        TODO("Implement check scheduler to fire events.")
+        us.aharon.monitoring.core.backend.checkScheduler(event.time, this.checks)
     }
 
     /**

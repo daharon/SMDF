@@ -9,13 +9,13 @@ inline fun checks(block: CheckGroup.() -> Unit): CheckGroup =
     CheckGroup().apply(block)
 
 inline fun CheckGroup.check(name: String, block: ClientCheck.() -> Unit) {
-    val check = ClientCheck()
+    val check = ClientCheck(name)
     check.apply(block)
     checks.add(check)
 }
 
 inline fun CheckGroup.serverlessCheck(name: String, block: ServerlessCheck.() -> Unit) {
-    val check = ServerlessCheck()
+    val check = ServerlessCheck(name)
     check.apply(block)
     checks.add(check)
 }

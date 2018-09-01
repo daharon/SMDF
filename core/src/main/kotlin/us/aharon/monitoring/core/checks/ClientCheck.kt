@@ -14,7 +14,7 @@ import us.aharon.monitoring.core.handlers.Handler
  *
  * A check that will be pushed to the queue for a client-side subscriber to execute remotely.
  */
-class ClientCheck : Check {
+class ClientCheck(override val name: String) : Check {
     override var interval: Int = 10
     override var notification: String = "Notification not set"
     override var handlers: List<KClass<out Handler>> = emptyList()

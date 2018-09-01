@@ -35,6 +35,9 @@ Resources:
       Role: !GetAtt MonitoringCheckSchedulerRole.Arn
       Timeout: 60
       MemorySize: 512
+      Environment:
+        Variables:
+          CLIENT_CHECK_TOPIC: !Ref MonitoringCheckDistributor
       Tags:
         - Key: App
           Value: Monitoring
@@ -73,6 +76,16 @@ Resources:
               - lambda.amazonaws.com
           Action:
             - sts:AssumeRole
+      Policies:
+        - PolicyName: SNSTopics
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref MonitoringCheckDistributor
 
   ##
   # Scheduled Events
@@ -98,7 +111,7 @@ Resources:
   ##
   # SNS Topics
   ##
-#  MonitoringAlertSNSTopic:
-#    Type: AWS::SNS::Topic
-#    Properties:
-#      DisplayName: buttinski-alerts
+  MonitoringCheckDistributor:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: monitoring-check-distributor

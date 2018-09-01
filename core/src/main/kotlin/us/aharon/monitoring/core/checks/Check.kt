@@ -10,6 +10,8 @@ import us.aharon.monitoring.core.handlers.Handler
 
 
 interface Check {
+
+    val name: String
     /**
      * Check interval in minutes.
      */

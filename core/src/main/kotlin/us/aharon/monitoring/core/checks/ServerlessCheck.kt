@@ -14,7 +14,7 @@ import us.aharon.monitoring.core.handlers.Handler
  *
  * A check that will be executed as an AWS Lambda function, independent of clients.
  */
-class ServerlessCheck : Check {
+class ServerlessCheck(override val name: String) : Check {
     override var interval: Int = 10
     override var notification: String = "Notification not set"
     override var handlers: List<KClass<out Handler>> = emptyList()

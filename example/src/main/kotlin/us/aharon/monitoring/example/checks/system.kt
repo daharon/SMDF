@@ -38,6 +38,6 @@ val SYSTEM_CHECKS = checks {
 
     serverlessCheck("404 Responses") {
         command = "us.aharon.monitoring.example.GraphiteCheck404s"
-        interval = 10
+        interval = 3
     }
 }
