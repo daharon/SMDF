@@ -31,9 +31,4 @@ class ServerlessCheck(override val name: String) : Check {
      * Default value forces a CRITICAL state.
      */
     var command: Any = Unit // TODO: Create an interface for user implemented check classes.
-
-
-    override fun run() {
-        TODO("Invoke the configured check as an AWS Lambda function.")
-    }
 }

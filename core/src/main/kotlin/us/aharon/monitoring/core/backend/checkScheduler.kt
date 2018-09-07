@@ -81,7 +81,7 @@ internal fun checkScheduler(time: DateTime, checks: List<CheckGroup>) {
 }
 
 /**
- * Determine if the give check should be run now.
+ * Determine if the given check should be run now.
  *
  * @param minutes Minutes since the epoch.
  * @param check The [Check] to evaluate.

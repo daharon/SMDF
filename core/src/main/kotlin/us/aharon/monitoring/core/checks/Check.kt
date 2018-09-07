@@ -40,9 +40,4 @@ interface Check {
      * TODO: Come up with a data structure for this.
      */
     var subdue: String
-
-    /**
-     * Execute the check operation.
-     */
-    fun run()
 }

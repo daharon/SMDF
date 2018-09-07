@@ -44,9 +44,4 @@ class ClientCheck(override val name: String) : Check {
      * Time to live in seconds before the check is automatically deleted from the queue.
      */
     var ttl: Int = 90
-
-
-    override fun run() {
-        TODO("Push the configured check to the queue.")
-    }
 }
