@@ -4,17 +4,21 @@
 
 package us.aharon.monitoring.example.checks
 
-import us.aharon.monitoring.core.checks.checks
-import us.aharon.monitoring.core.checks.check
-import us.aharon.monitoring.core.checks.serverlessCheck
+import us.aharon.monitoring.core.api.checks
+import us.aharon.monitoring.core.api.check
+import us.aharon.monitoring.core.api.serverlessCheck
 
 import us.aharon.monitoring.example.executors.CheckRunningInUSEast1
 import us.aharon.monitoring.example.handlers.DefaultHandler
 
 
+/**
+ * Example check group.
+ */
 val SYSTEM_CHECKS = checks {
 
     /**
+     * Client Check example.
      * https://docs.sensu.io/sensu-core/1.4/reference/checks/#check-configuration
      */
     check("CPU") {
@@ -37,7 +41,26 @@ val SYSTEM_CHECKS = checks {
         subdue = ""  // A set time period to dis-able this check.
     }
 
+    /**
+     * Client Check example with user defined default template.
+     */
+    defaultClientCheck("RSyslog is running") {
+        command = "/usr/lib64/nagios/plugins/check_procs --critical 1:1 --command rsyslog"
+        interval = 2  // Override the template value.
+    }
+
+    /**
+     * Serverless Check example.
+     */
     serverlessCheck("Running in us-east-1 availability zone") {
+        executor = CheckRunningInUSEast1::class
+        interval = 3
+    }
+
+    /**
+     * Serverless Check example with user defined default template.
+     */
+    defaultServerlessCheck("User defined serverless check template") {
         executor = CheckRunningInUSEast1::class
         interval = 3
     }

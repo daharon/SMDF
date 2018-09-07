@@ -4,7 +4,7 @@
 
 package us.aharon.monitoring.core.util
 
-import us.aharon.monitoring.core.Application
+import us.aharon.monitoring.core.api.Application
 
 import java.io.File
 import kotlin.reflect.KClass

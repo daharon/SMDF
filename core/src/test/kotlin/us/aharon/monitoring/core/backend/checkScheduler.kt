@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 import us.aharon.monitoring.core.checks.ClientCheck
-import us.aharon.monitoring.core.checks.check
-import us.aharon.monitoring.core.checks.checks
+import us.aharon.monitoring.core.api.check
+import us.aharon.monitoring.core.api.checks
 
 
 class CheckSchedulerTest {

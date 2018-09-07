@@ -2,7 +2,7 @@
  * Copyright (c) 2018 Daniel Aharon
  */
 
-package us.aharon.monitoring.core
+package us.aharon.monitoring.core.api
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
 import com.amazonaws.services.cloudformation.model.*

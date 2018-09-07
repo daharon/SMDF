@@ -4,7 +4,7 @@
 
 package us.aharon.monitoring.example
 
-import us.aharon.monitoring.core.Application
+import us.aharon.monitoring.core.api.Application
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
 
