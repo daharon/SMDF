@@ -26,9 +26,9 @@ class ServerlessCheck(override val name: String) : Check {
     override var autoResolve: Boolean = true
     override var occurrences: Int = 1
     override var subdue: String = ""
+
     /**
-     * Check command to run.
-     * Default value forces a CRITICAL state.
+     * ServerlessCheck class to run.
      */
-    var command: Any = Unit // TODO: Create an interface for user implemented check classes.
+    var executor: KClass<out ServerlessExecutor> = FailServerlessExecutor::class
 }

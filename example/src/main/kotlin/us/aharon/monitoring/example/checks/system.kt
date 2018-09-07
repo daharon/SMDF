@@ -8,6 +8,7 @@ import us.aharon.monitoring.core.checks.checks
 import us.aharon.monitoring.core.checks.check
 import us.aharon.monitoring.core.checks.serverlessCheck
 
+import us.aharon.monitoring.example.executors.CheckRunningInUSEast1
 import us.aharon.monitoring.example.handlers.DefaultHandler
 
 
@@ -36,8 +37,8 @@ val SYSTEM_CHECKS = checks {
         subdue = ""  // A set time period to dis-able this check.
     }
 
-    serverlessCheck("404 Responses") {
-        command = "us.aharon.monitoring.example.GraphiteCheck404s"
+    serverlessCheck("Running in us-east-1 availability zone") {
+        executor = CheckRunningInUSEast1::class
         interval = 3
     }
 }

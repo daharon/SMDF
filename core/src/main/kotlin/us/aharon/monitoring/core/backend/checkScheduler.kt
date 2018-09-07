@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit
 
 private val log: KLogger by lazy { KotlinLogging.logger(::checkScheduler.name) }
 private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { System.getenv("CLIENT_CHECK_TOPIC") }
+private val SNS_SERVERLESS_CHECK_TOPIC_ARN: String by lazy { System.getenv("SERVERLESS_CHECK_TOPIC") }
 private const val SNS_MESSAGE_ATTRIBUTE_SUBSCRIBERS = "subscribers"
 
 private data class ClientCheckMessage(
@@ -34,7 +35,7 @@ private data class ClientCheckMessage(
 
 private data class ServerlessCheckMessage(
         val name: String,
-        val command: String,
+        val executor: String,
         val timeout: Int
 )
 
@@ -69,15 +70,14 @@ internal fun checkScheduler(time: DateTime, checks: List<CheckGroup>) {
     val serverlessChecks: List<ServerlessCheckMessage> = scheduleChecks
             .filterIsInstance(ServerlessCheck::class.java)
             .map {
-                ServerlessCheckMessage(it.name, it.command.toString(), it.timeout)
+                ServerlessCheckMessage(it.name, it.executor.java.name, it.timeout)
             }
 
     // Send the client check messages to the SNS topic.
     sendClientChecks(clientChecks)
 
-
-    // TODO: Invoke the serverless check messages as Lambda functions.
-
+    // Send the serverless check messages to the SNS topic.
+    sendServerlessChecks(serverlessChecks)
 }
 
 /**
@@ -119,3 +119,24 @@ private fun sendClientChecks(clientChecks: List<ClientCheckMessage>) {
         log.info { "Published message ID:  ${result.messageId}" }
     }
 }
+
+/**
+ * Publish the scheduled serverless checks to the SNS fanout topic.
+ *
+ * @param serverlessChecks The [ServerlessCheckMessage]'s that have been scheduled.
+ */
+private fun sendServerlessChecks(serverlessChecks: List<ServerlessCheckMessage>) {
+    val mapper = ObjectMapper()
+    val snsClient = AmazonSNSClientBuilder.standard().build()
+
+    serverlessChecks.forEach { check ->
+        val jsonMessage = mapper.writeValueAsString(check)
+        val publishReq = PublishRequest()
+                .withTopicArn(SNS_SERVERLESS_CHECK_TOPIC_ARN)
+                .withMessage(jsonMessage)
+        log.info { "SNS publish request:\n$publishReq" }
+        val result = snsClient.publish(publishReq)
+        log.info { "Published message ID:  ${result.messageId}" }
+    }
+}
+

@@ -37,7 +37,8 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
-          CLIENT_CHECK_TOPIC: !Ref MonitoringCheckDistributor
+          CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
+          SERVERLESS_CHECK_TOPIC: !Ref MonitoringServerlessCheckDistributor
       Tags:
         - Key: App
           Value: Monitoring
@@ -85,7 +86,8 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource:
-                  - !Ref MonitoringCheckDistributor
+                  - !Ref MonitoringClientCheckDistributor
+                  - !Ref MonitoringServerlessCheckDistributor
 
   ##
   # Scheduled Events
@@ -111,7 +113,12 @@ Resources:
   ##
   # SNS Topics
   ##
-  MonitoringCheckDistributor:
+  MonitoringClientCheckDistributor:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: monitoring-check-distributor
+      DisplayName: monitoring-client-check-distributor
+
+  MonitoringServerlessCheckDistributor:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: monitoring-serverless-check-distributor
