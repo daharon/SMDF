@@ -25,8 +25,6 @@ class App : Application() {
          * CLI entry point.
          */
         @JvmStatic
-        fun main(vararg args: String) {
-            App().run(args)
-        }
+        fun main(vararg args: String) = App().run(args)
     }
 }
