@@ -17,9 +17,29 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <aws.java.sdk.version>1.11.390</aws.java.sdk.version>
+        <koin.version>1.0.0-RC-2</koin.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>jcenter</id>
+            <url>https://jcenter.bintray.com/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
+        <!-- Dependency Injection -->
+        <dependency>
+            <groupId>org.koin</groupId>
+            <artifactId>koin-core</artifactId>
+            <version>${koin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.koin</groupId>
+            <artifactId>koin-logger-slf4j</artifactId>
+            <version>${koin.version}</version>
+        </dependency>
+
         <!-- Command-line parsing -->
         <dependency>
             <groupId>info.picocli</groupId>
@@ -71,6 +91,14 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-dynamodb</artifactId>
             <version>${aws.java.sdk.version}</version>
+        </dependency>
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.koin</groupId>
+            <artifactId>koin-test</artifactId>
+            <version>1.0.0-RC-2</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

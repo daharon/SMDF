@@ -9,12 +9,17 @@ import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import mu.KLogger
-import mu.KotlinLogging
+import org.koin.core.parameter.parametersOf
+import org.koin.log.Logger.SLF4JLogger
+import org.koin.standalone.KoinComponent
+import org.koin.standalone.StandAloneContext.startKoin
+import org.koin.standalone.inject
 import picocli.CommandLine
 
 import us.aharon.monitoring.core.events.NotificationEvent
 import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.cli.Base
+import us.aharon.monitoring.core.di.modules
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
 
@@ -29,14 +34,18 @@ import us.aharon.monitoring.core.mutators.Mutator
  * - Command-line executable that performs installation of the monitoring application.
  * - Serverless function handlers.
  */
-abstract class Application {
+abstract class Application : KoinComponent {
 
     abstract val checks: List<CheckGroup>
     abstract val filters: List<Filter>
     abstract val mutators: List<Mutator>
 
-    protected val log: KLogger by lazy { KotlinLogging.logger(this::class.java.simpleName) }
+    protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
 
+
+    init {
+        startKoin(listOf(modules), logger = SLF4JLogger())
+    }
 
     /**
      * Entry point for the CLI.

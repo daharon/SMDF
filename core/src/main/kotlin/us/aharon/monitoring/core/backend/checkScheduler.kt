@@ -4,27 +4,29 @@
 
 package us.aharon.monitoring.core.backend
 
-import com.amazonaws.services.sns.AmazonSNSClientBuilder
+import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.MessageAttributeValue
 import com.amazonaws.services.sns.model.PublishRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.joda.time.DateTime
 import mu.KLogger
-import mu.KotlinLogging
+import org.koin.core.parameter.parametersOf
+import org.koin.standalone.inject
 
 import us.aharon.monitoring.core.checks.Check
 import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.checks.ClientCheck
 import us.aharon.monitoring.core.checks.ServerlessCheck
+import us.aharon.monitoring.core.di.DI
 import us.aharon.monitoring.core.util.joinToSNSMessageAttributeStringValue
 
 import java.util.concurrent.TimeUnit
 
 
-private val log: KLogger by lazy { KotlinLogging.logger(::checkScheduler.name) }
 private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { System.getenv("CLIENT_CHECK_TOPIC") }
 private val SNS_SERVERLESS_CHECK_TOPIC_ARN: String by lazy { System.getenv("SERVERLESS_CHECK_TOPIC") }
 private const val SNS_MESSAGE_ATTRIBUTE_SUBSCRIBERS = "subscribers"
+private val log: KLogger by DI.inject { parametersOf(::checkScheduler.name) }
 
 private data class ClientCheckMessage(
         val name: String,
@@ -99,7 +101,7 @@ private fun scheduleCheck(minutes: Long, check: Check): Boolean {
  */
 private fun sendClientChecks(clientChecks: List<ClientCheckMessage>) {
     val mapper = ObjectMapper()
-    val snsClient = AmazonSNSClientBuilder.standard().build()
+    val snsClient: AmazonSNS by DI.inject()
 
     clientChecks.forEach { check ->
         val jsonMessage = mapper.writeValueAsString(check)
@@ -127,7 +129,7 @@ private fun sendClientChecks(clientChecks: List<ClientCheckMessage>) {
  */
 private fun sendServerlessChecks(serverlessChecks: List<ServerlessCheckMessage>) {
     val mapper = ObjectMapper()
-    val snsClient = AmazonSNSClientBuilder.standard().build()
+    val snsClient: AmazonSNS by DI.inject()
 
     serverlessChecks.forEach { check ->
         val jsonMessage = mapper.writeValueAsString(check)
