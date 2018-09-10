@@ -22,6 +22,7 @@ import us.aharon.monitoring.core.cli.Base
 import us.aharon.monitoring.core.di.modules
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
+import us.aharon.monitoring.core.backend.CheckScheduler
 
 
 /**
@@ -41,6 +42,7 @@ abstract class Application : KoinComponent {
     abstract val mutators: List<Mutator>
 
     protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
+    private val checkScheduler by lazy { CheckScheduler() }
 
 
     init {
@@ -75,7 +77,7 @@ abstract class Application : KoinComponent {
         log.info { "Detail Type:  ${event.detailType}" }
         log.info { "Detail:  ${event.detail}" }
         log.info { "Resources:  ${event.resources}" }
-        us.aharon.monitoring.core.backend.checkScheduler(event.time, this.checks)
+        this.checkScheduler.run(event.time, this.checks)
     }
 
     /**
