@@ -19,6 +19,9 @@ Resources:
       Role: !GetAtt MonitoringClientRegistrationRole.Arn
       Timeout: 60
       MemorySize: 512
+      Environment:
+        Variables:
+          CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
       Tags:
         - Key: App
           Value: Monitoring
@@ -61,6 +64,21 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBClientsTable
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                  - dynamodb:BatchGetItem
+                  - dynamodb:GetItem
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt MonitoringClientsTable.Arn
 
   MonitoringCheckSchedulerRole:
     Type: AWS::IAM::Role
@@ -122,3 +140,22 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       DisplayName: monitoring-serverless-check-distributor
+
+  ##
+  # DynamoDB Tables
+  ##
+  MonitoringClientsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: clientName
+          AttributeType: S
+      KeySchema:
+        - AttributeName: clientName
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      Tags:
+        - Key: App
+          Value: Monitoring
