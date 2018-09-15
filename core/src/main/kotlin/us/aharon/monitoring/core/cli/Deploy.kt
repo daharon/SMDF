@@ -16,6 +16,7 @@ import picocli.CommandLine.Option
 import us.aharon.monitoring.core.http.ClientRegistrationHandler
 import us.aharon.monitoring.core.util.getJarAbsolutePath
 import us.aharon.monitoring.core.util.getJarFilename
+import us.aharon.monitoring.core.db.CLIENTS_DB_TABLE_NAME
 
 import java.io.StringWriter
 import java.io.File
@@ -216,7 +217,8 @@ internal class Deploy : Runnable {
                         "${ClientRegistrationHandler::class.java.canonicalName}::${ClientRegistrationHandler::handleRequest.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",
                 "codeS3Bucket" to s3Dest,
-                "codeS3Key" to getJarFilename(parent.app::class)
+                "codeS3Key" to getJarFilename(parent.app::class),
+                "clientsTableName" to CLIENTS_DB_TABLE_NAME
         )
         val renderedTemplate = StringWriter()
         templateCfn.process(templateData, renderedTemplate)

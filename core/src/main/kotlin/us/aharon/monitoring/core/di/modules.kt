@@ -4,8 +4,13 @@
 
 package us.aharon.monitoring.core.di
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.AmazonSNSClientBuilder
+import com.amazonaws.services.sqs.AmazonSQS
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import mu.KLogger
@@ -17,4 +22,14 @@ internal val modules = module {
     single<KLogger> { (name: String) -> KotlinLogging.logger(name) }
     single<AmazonSNS> { AmazonSNSClientBuilder.standard().build() }
     single<ObjectMapper> { ObjectMapper().registerKotlinModule() }
+    single<DynamoDBMapper> {
+        val client = AmazonDynamoDBClientBuilder.standard().build()
+        val config = DynamoDBMapperConfig.builder()
+                .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.UPDATE)
+                .build()
+        DynamoDBMapper(client, config)
+    }
+    single<AmazonSQS> { AmazonSQSClientBuilder.standard().build() }
 }
+
+

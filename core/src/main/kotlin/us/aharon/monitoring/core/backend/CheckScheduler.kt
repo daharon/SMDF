@@ -43,7 +43,7 @@ internal class CheckScheduler : KoinComponent {
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
 
     companion object {
-        private const val SNS_MESSAGE_ATTRIBUTE_SUBSCRIBERS = "subscribers"
+        private const val SNS_MESSAGE_ATTRIBUTE_TAGS = "tags"
     }
 
     /**
@@ -115,7 +115,7 @@ internal class CheckScheduler : KoinComponent {
                     // Set message attributes so that the subscribed SQS queues can set filter policies.
                     .withMessageAttributes(
                             mapOf(
-                                    SNS_MESSAGE_ATTRIBUTE_SUBSCRIBERS to MessageAttributeValue()
+                                    SNS_MESSAGE_ATTRIBUTE_TAGS to MessageAttributeValue()
                                             .withDataType("String.Array")
                                             .withStringValue(check.subscribers.joinToSNSMessageAttributeStringValue())
                             )

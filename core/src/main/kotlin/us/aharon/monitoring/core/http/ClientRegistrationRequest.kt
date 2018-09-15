@@ -6,6 +6,6 @@ package us.aharon.monitoring.core.http
 
 
 data class ClientRegistrationRequest(
-        var clientName: String? = null,
-        var clientTags: List<String>? = null
+        var name: String? = null,
+        var tags: List<String>? = null
 )
