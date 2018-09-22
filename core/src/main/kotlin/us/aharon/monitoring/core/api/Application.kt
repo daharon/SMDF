@@ -23,6 +23,7 @@ import us.aharon.monitoring.core.di.modules
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
 import us.aharon.monitoring.core.backend.CheckScheduler
+import us.aharon.monitoring.core.backend.ClientCleanup
 
 
 /**
@@ -42,7 +43,8 @@ abstract class Application : KoinComponent {
     abstract val mutators: List<Mutator>
 
     protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
-    private val checkScheduler by lazy { CheckScheduler() }
+    private val _checkScheduler by lazy { CheckScheduler() }
+    private val _clientCleanup by lazy { ClientCleanup() }
 
 
     init {
@@ -77,7 +79,7 @@ abstract class Application : KoinComponent {
         log.info { "Detail Type:  ${event.detailType}" }
         log.info { "Detail:  ${event.detail}" }
         log.info { "Resources:  ${event.resources}" }
-        this.checkScheduler.run(event.time, this.checks)
+        this._checkScheduler.run(event.time, this.checks)
     }
 
     /**
@@ -105,5 +107,14 @@ abstract class Application : KoinComponent {
      */
     fun notificationHandler(event: NotificationEvent, context: Context) {
         TODO("Run the notification handler class.")
+    }
+
+    /**
+     * Cleanup client resources (queues, SNS subscriptions) when modified or
+     * deleted in the clients DynamoDB table.
+     */
+    fun clientCleanup(event: DynamodbEvent, context: Context) {
+        log.info("DynamoDB stream event: $event")
+        this._clientCleanup.run(event)
     }
 }

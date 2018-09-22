@@ -31,5 +31,8 @@ internal data class ClientRecord(
         var queueArn: String? = null,
 
         @DynamoDBAttribute
+        var queueUrl: String? = null,
+
+        @DynamoDBAttribute
         var subscriptionArn: String? = null
 )

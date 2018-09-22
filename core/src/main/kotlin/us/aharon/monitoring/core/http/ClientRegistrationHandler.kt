@@ -95,7 +95,12 @@ class ClientRegistrationHandler : BaseRequestHandler() {
             log.info("Subscribed queue to SNS topic:  ${subscribeResult.subscriptionArn}")
 
             // Write client to database.
-            val clientRecord = ClientRecord(data.name, data.tags, queueArn, subscribeResult.subscriptionArn)
+            val clientRecord = ClientRecord(
+                    name = data.name,
+                    tags = data.tags,
+                    queueArn = queueArn,
+                    queueUrl = queueResult.queueUrl,
+                    subscriptionArn = subscribeResult.subscriptionArn)
             db.save(clientRecord)
             log.info("Saved client to database:  $clientRecord")
 
