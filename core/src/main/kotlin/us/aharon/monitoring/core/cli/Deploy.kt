@@ -217,8 +217,7 @@ internal class Deploy : Runnable {
                         "${ClientRegistrationHandler::class.java.canonicalName}::${ClientRegistrationHandler::handleRequest.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",
                 "codeS3Bucket" to s3Dest,
-                "codeS3Key" to getJarFilename(parent.app::class),
-                "clientsTableName" to CLIENTS_DB_TABLE_NAME
+                "codeS3Key" to getJarFilename(parent.app::class)
         )
         val renderedTemplate = StringWriter()
         templateCfn.process(templateData, renderedTemplate)

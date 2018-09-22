@@ -173,7 +173,6 @@ Resources:
   MonitoringClientsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: '${clientsTableName}'
       AttributeDefinitions:
         - AttributeName: name
           AttributeType: S

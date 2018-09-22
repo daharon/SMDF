@@ -17,6 +17,8 @@ import mu.KLogger
 import mu.KotlinLogging
 import org.koin.dsl.module.module
 
+import us.aharon.monitoring.core.db.TableNameResolver
+
 
 internal val modules = module {
     single<KLogger> { (name: String) -> KotlinLogging.logger(name) }
@@ -26,6 +28,8 @@ internal val modules = module {
         val client = AmazonDynamoDBClientBuilder.standard().build()
         val config = DynamoDBMapperConfig.builder()
                 .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.UPDATE)
+                // Set our own table name resolution.
+                .withTableNameResolver(TableNameResolver())
                 .build()
         DynamoDBMapper(client, config)
     }

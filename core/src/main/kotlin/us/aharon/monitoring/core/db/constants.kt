@@ -5,4 +5,4 @@
 package us.aharon.monitoring.core.db
 
 
-internal const val CLIENTS_DB_TABLE_NAME = "monitoring-clients"
+internal val CLIENTS_DB_TABLE_NAME by lazy { System.getenv("CLIENT_DB_TABLE") }

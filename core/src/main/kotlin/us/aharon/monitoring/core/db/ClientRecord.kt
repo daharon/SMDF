@@ -14,8 +14,10 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperFieldModel
 /**
  * DynamoDB table for client registration.
  * Keep track of the client queues.
+ *
+ * The table name is dynamically defined in [TableNameResolver].
  */
-@DynamoDBTable(tableName = CLIENTS_DB_TABLE_NAME)
+@DynamoDBTable(tableName = "DYNAMICALLY_DEFINED")
 internal data class ClientRecord(
 
         @DynamoDBHashKey
