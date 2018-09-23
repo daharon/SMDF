@@ -18,6 +18,7 @@ import us.aharon.monitoring.core.checks.Check
 import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.checks.ClientCheck
 import us.aharon.monitoring.core.checks.ServerlessCheck
+import us.aharon.monitoring.core.util.Env
 import us.aharon.monitoring.core.util.joinToSNSMessageAttributeStringValue
 
 import java.util.concurrent.TimeUnit
@@ -38,9 +39,11 @@ private data class ServerlessCheckMessage(
 
 internal class CheckScheduler : KoinComponent {
 
-    private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { System.getenv("CLIENT_CHECK_TOPIC") }
-    private val SNS_SERVERLESS_CHECK_TOPIC_ARN: String by lazy { System.getenv("SERVERLESS_CHECK_TOPIC") }
+    private val env: Env by inject()
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
+
+    private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { env.get("CLIENT_CHECK_TOPIC") }
+    private val SNS_SERVERLESS_CHECK_TOPIC_ARN: String by lazy { env.get("SERVERLESS_CHECK_TOPIC") }
 
     companion object {
         private const val SNS_MESSAGE_ATTRIBUTE_TAGS = "tags"

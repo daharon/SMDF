@@ -39,6 +39,9 @@ Resources:
       Role: !GetAtt MonitoringClientCleanupRole.Arn
       Timeout: 60
       MemorySize: 512
+      Environment:
+        Variables:
+          CLIENT_DB_TABLE: !Ref MonitoringClientsTable
       Tags:
         - Key: App
           Value: Monitoring

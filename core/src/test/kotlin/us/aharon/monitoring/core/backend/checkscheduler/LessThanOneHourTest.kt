@@ -8,15 +8,9 @@ import cloud.localstack.LocalstackExtension
 import com.amazonaws.services.sns.AmazonSNS
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.koin.log.PrintLogger
-import org.koin.standalone.StandAloneContext.startKoin
-import org.koin.standalone.StandAloneContext.stopKoin
 import org.koin.standalone.inject
-import org.koin.test.KoinTest
 import kotlin.test.assertEquals
 
 import us.aharon.monitoring.core.checks.ClientCheck
@@ -25,27 +19,15 @@ import us.aharon.monitoring.core.api.checks
 import us.aharon.monitoring.core.api.serverlessCheck
 import us.aharon.monitoring.core.backend.CheckScheduler
 import us.aharon.monitoring.core.checks.ServerlessCheck
-import us.aharon.monitoring.core.di.modules
+import us.aharon.monitoring.core.BaseTest
 
 
 @ExtendWith(LocalstackExtension::class)
-class LessThanOneHourTest : KoinTest {
+class LessThanOneHourTest : BaseTest() {
 
     companion object {
-        private val CLIENT_CHECK_TOPIC = System.getenv("CLIENT_CHECK_TOPIC")
-        private val SERVERLESS_CHECK_TOPIC = System.getenv("SERVERLESS_CHECK_TOPIC")
-
-        @BeforeAll
-        @JvmStatic
-        internal fun beforeAll() {
-            startKoin(listOf(modules), logger = PrintLogger())
-        }
-
-        @AfterAll
-        @JvmStatic
-        internal fun afterAll() {
-            stopKoin()
-        }
+        private const val CLIENT_CHECK_TOPIC = "TEST_CLIENT_CHECK_TOPIC"
+        private const val SERVERLESS_CHECK_TOPIC = "TEST_SERVERLESS_CHECK_TOPIC"
     }
 
     @Test

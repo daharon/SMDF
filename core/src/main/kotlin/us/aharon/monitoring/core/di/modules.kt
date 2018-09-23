@@ -18,9 +18,11 @@ import mu.KotlinLogging
 import org.koin.dsl.module.module
 
 import us.aharon.monitoring.core.db.TableNameResolver
+import us.aharon.monitoring.core.util.Env
 
 
 internal val modules = module {
+    single<Env> { Env() }
     single<KLogger> { (name: String) -> KotlinLogging.logger(name) }
     single<AmazonSNS> { AmazonSNSClientBuilder.standard().build() }
     single<ObjectMapper> { ObjectMapper().registerKotlinModule() }

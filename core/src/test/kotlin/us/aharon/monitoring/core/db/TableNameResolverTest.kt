@@ -10,13 +10,15 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
+import us.aharon.monitoring.core.BaseTest
 
-class TableNameResolverTest {
+
+class TableNameResolverTest : BaseTest() {
 
     @Test
     fun `Table name resolves successfully`() {
         val dynamoDbTableRecord = ClientRecord()
-        val expected = ""  // Empty, since we don't have environment variables set.
+        val expected = "CLIENT_DB_TABLE"
         val actual = TableNameResolver().getTableName(dynamoDbTableRecord::class.java, null)
         assertEquals(expected, actual)
     }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.koin.standalone.inject
 
 import us.aharon.monitoring.core.db.ClientRecord
+import us.aharon.monitoring.core.util.Env
 
 import java.util.UUID
 
@@ -29,13 +30,14 @@ import java.util.UUID
  */
 class ClientRegistrationHandler : BaseRequestHandler() {
 
+    private val env: Env by inject()
     private val db: DynamoDBMapper by inject()
     private val sqs: AmazonSQS by inject()
     private val sns: AmazonSNS by inject()
     /**
      * New client queues are subscribed to this SNS Topic.
      */
-    private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { System.getenv("CLIENT_CHECK_TOPIC") }
+    private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { env.get("CLIENT_CHECK_TOPIC") }
 
     companion object {
         private const val SNS_MESSAGE_ATTRIBUTE_TAGS = "tags"

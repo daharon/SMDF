@@ -5,6 +5,7 @@
 package us.aharon.monitoring.core.backend
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.UnsubscribeRequest
@@ -20,7 +21,7 @@ import us.aharon.monitoring.core.db.ClientRecord
 
 /**
  * Cleanup/delete resources created by the [us.aharon.monitoring.core.http.ClientRegistrationHandler] when
- * a client is deleted/modified in the [us.aharon.monitoring.core.db.CLIENTS_DB_TABLE_NAME] DynamoDB table.
+ * a client is deleted/modified in the Clients DynamoDB table.
  *
  * - SNS subscription
  * - SQS Queue
@@ -34,10 +35,10 @@ internal class ClientCleanup : KoinComponent {
 
 
     fun run(event: DynamodbEvent) = event.records.forEach {
-        when (it.eventName.toUpperCase()) {
-            "MODIFY" -> modify(it)
-            "REMOVE" -> remove(it)
-            "INSERT" -> log.info("Do nothing on ${it.eventName} event.")
+        when (OperationType.fromValue(it.eventName)) {
+            OperationType.MODIFY -> modify(it)
+            OperationType.REMOVE -> remove(it)
+            OperationType.INSERT -> log.info("Do nothing on ${it.eventName} event.")
             else -> log.error("Unknown event name provided:  ${it.eventName}")
         }
     }
