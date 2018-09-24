@@ -60,66 +60,70 @@ class ClientRegistrationHandler : BaseRequestHandler() {
         // Check to see if the client already exists in the database.
         val existingClient: ClientRecord? = getExistingClient(data.name!!)
 
-        val response: APIGatewayProxyResponseEvent = if (existingClient == null) {
-            // New client.  Create queue.
-            val queueName = "monitoring-${UUID.randomUUID()}"
-            log.info("Generated queue name:  $queueName")
-            // TODO: Assign tags to queue.  App and client name.
-            val queueRequest = CreateQueueRequest(queueName)
-                    .withAttributes(mapOf("MessageRetentionPeriod" to "3600"))
-            val queueResult = sqs.createQueue(queueRequest)
-            // Get queue ARN.  For some reason this is not returned in the createQueue() result.
-            val queueAttrRequest = GetQueueAttributesRequest(queueResult.queueUrl)
-                    .withAttributeNames("QueueArn")
-            val queueArn = sqs.getQueueAttributes(queueAttrRequest).attributes["QueueArn"]
-            log.info("Created queue:  $queueArn")
+        val response: APIGatewayProxyResponseEvent = when (existingClient) {
+            is ClientRecord -> {
+                // Existing client.
+                log.info("Client already registered:  $existingClient")
+                // TODO: Verify that queue and subscription still exist.
+                val responseBody = json.writeValueAsString(
+                        ClientRegistrationResponse(existingClient.queueArn))
+                APIGatewayProxyResponseEvent()
+                        .withStatusCode(200)
+                        .withBody(responseBody)
+            }
+            else -> {
+                // New client.  Create queue.
+                val queueName = "monitoring-${UUID.randomUUID()}"
+                log.info("Generated queue name:  $queueName")
+                // TODO: Assign tags to queue.  App and client name.
+                val queueRequest = CreateQueueRequest(queueName)
+                        .withAttributes(mapOf("MessageRetentionPeriod" to "3600"))
+                val queueResult = sqs.createQueue(queueRequest)
+                // Get queue ARN.  For some reason this is not returned in the createQueue() result.
+                val queueAttrRequest = GetQueueAttributesRequest(queueResult.queueUrl)
+                        .withAttributeNames("QueueArn")
+                val queueArn = sqs.getQueueAttributes(queueAttrRequest).attributes["QueueArn"]
+                log.info("Created queue:  $queueArn")
 
-            // Allow SNS topic to send messages to the queue.
-            val queuePermRequest = SetQueueAttributesRequest()
-                    .withQueueUrl(queueResult.queueUrl)
-                    .withAttributes(mapOf(
-                            "Policy" to generateQueuePermissionPolicy(queueArn!!, SNS_CLIENT_CHECK_TOPIC_ARN)
-                    ))
-            val queuePermResult = sqs.setQueueAttributes(queuePermRequest)
-            log.info("Set permission policy for queue.")
+                // Allow SNS topic to send messages to the queue.
+                val queuePermRequest = SetQueueAttributesRequest()
+                        .withQueueUrl(queueResult.queueUrl)
+                        .withAttributes(mapOf(
+                                "Policy" to generateQueuePermissionPolicy(queueArn!!, SNS_CLIENT_CHECK_TOPIC_ARN)
+                        ))
+                sqs.setQueueAttributes(queuePermRequest)
+                log.info("Set permission policy for queue.")
 
-            // Subscribe queue to SNS Topic.
-            val subscribeRequest = SubscribeRequest()
-                    .withTopicArn(SNS_CLIENT_CHECK_TOPIC_ARN)
-                    .withProtocol("sqs")
-                    .withEndpoint(queueArn)
-                    .withAttributes(mapOf(
-                            "FilterPolicy" to json.writeValueAsString(mapOf(
-                                    SNS_MESSAGE_ATTRIBUTE_TAGS to data.tags
-                            ))
-                    ))
-            val subscribeResult = sns.subscribe(subscribeRequest)
-            log.info("Subscribed queue to SNS topic:  ${subscribeResult.subscriptionArn}")
+                // Subscribe queue to SNS Topic.
+                val subscribeRequest = SubscribeRequest()
+                        .withTopicArn(SNS_CLIENT_CHECK_TOPIC_ARN)
+                        .withProtocol("sqs")
+                        .withEndpoint(queueArn)
+                        .withAttributes(mapOf(
+                                "FilterPolicy" to json.writeValueAsString(mapOf(
+                                        SNS_MESSAGE_ATTRIBUTE_TAGS to data.tags
+                                ))
+                        ))
+                val subscribeResult = sns.subscribe(subscribeRequest)
+                log.info("Subscribed queue to SNS topic:  ${subscribeResult.subscriptionArn}")
 
-            // Write client to database.
-            val clientRecord = ClientRecord(
-                    name = data.name,
-                    tags = data.tags,
-                    queueArn = queueArn,
-                    queueUrl = queueResult.queueUrl,
-                    subscriptionArn = subscribeResult.subscriptionArn)
-            db.save(clientRecord)
-            log.info("Saved client to database:  $clientRecord")
+                // Write client to database.
+                val clientRecord = ClientRecord(
+                        name = data.name,
+                        tags = data.tags,
+                        queueArn = queueArn,
+                        queueUrl = queueResult.queueUrl,
+                        subscriptionArn = subscribeResult.subscriptionArn)
+                db.save(clientRecord)
+                log.info("Saved client to database:  $clientRecord")
 
-            // Response
-            val responseBody = json.writeValueAsString(
-                    ClientRegistrationResponse(queueArn))
-            APIGatewayProxyResponseEvent()
-                    .withStatusCode(200)
-                    .withBody(responseBody)
-        } else {
-            // Existing client.  Verify that queue and subscription still exist.
-            log.info("Client already registered:  $existingClient")
-            val responseBody = json.writeValueAsString(
-                    ClientRegistrationResponse(existingClient.queueArn))
-            APIGatewayProxyResponseEvent()
-                    .withStatusCode(200)
-                    .withBody(responseBody)
+                // Response
+                val responseBody = json.writeValueAsString(
+                        ClientRegistrationResponse(queueArn))
+                APIGatewayProxyResponseEvent()
+                        .withStatusCode(200)
+                        .withBody(responseBody)
+            }
         }
 
         return response
