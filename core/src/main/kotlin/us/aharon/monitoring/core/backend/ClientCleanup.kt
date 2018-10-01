@@ -8,9 +8,11 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.sns.AmazonSNS
+import com.amazonaws.services.sns.model.NotFoundException
 import com.amazonaws.services.sns.model.UnsubscribeRequest
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.model.DeleteQueueRequest
+import com.amazonaws.services.sqs.model.QueueDoesNotExistException
 import mu.KLogger
 import org.koin.core.parameter.parametersOf
 import org.koin.standalone.KoinComponent
@@ -46,19 +48,23 @@ internal class ClientCleanup : KoinComponent {
     /**
      * Delete SQS Queue.
      */
-    private fun deleteQueue(queueArn: String?, queueUrl: String?) {
+    private fun deleteQueue(queueArn: String?, queueUrl: String?) = try {
         val deleteQueueRequest = DeleteQueueRequest(queueUrl)
         sqs.deleteQueue(deleteQueueRequest)
         log.info("Deleted SQS queue:  $queueArn")
+    } catch (e: QueueDoesNotExistException) {
+        log.warn("Queue does not exist:  $queueArn")
     }
 
     /**
      * Delete SNS subscription.
      */
-    private fun deleteSubscription(subscriptionArn: String?) {
+    private fun deleteSubscription(subscriptionArn: String?) = try {
         val unsubscribeRequest = UnsubscribeRequest(subscriptionArn)
         sns.unsubscribe(unsubscribeRequest)
         log.info("Deleted SNS subscription:  $subscriptionArn")
+    } catch (e: NotFoundException) {
+        log.warn("SNS subscription does not exist:  $subscriptionArn")
     }
 
     /**

@@ -121,6 +121,7 @@ Resources:
                 Action:
                   - sns:Subscribe
                   - sns:SetSubscriptionAttributes
+                  - sns:GetSubscriptionAttributes
                   - sns:Unsubscribe
                 Resource:
                   - !Ref MonitoringClientCheckDistributor
