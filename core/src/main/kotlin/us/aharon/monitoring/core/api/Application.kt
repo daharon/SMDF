@@ -86,7 +86,10 @@ abstract class Application : KoinComponent {
      * Receive scheduled check results and save to database.
      */
     fun checkResultReceiver(event: SQSEvent, context: Context) {
-        TODO("Implement check result processor.")
+        log.info("Received ${event.records.size} SQS messages.")
+        event.records.forEach {
+            log.info("Message body:  ${it.body}")
+        }
     }
 
     /**

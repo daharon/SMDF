@@ -9,9 +9,10 @@ import javax.naming.NameNotFoundException
 
 private val ENVIRONMENT_VARIABLES = mapOf<String, String?>(
         "CLIENT_CHECK_TOPIC" to System.getenv("CLIENT_CHECK_TOPIC"),
-        "CLIENT_CHECK_TOPIC" to System.getenv("CLIENT_CHECK_TOPIC"),
+        "CHECK_RESULTS_QUEUE" to System.getenv("CHECK_RESULTS_QUEUE"),
         "SERVERLESS_CHECK_TOPIC" to System.getenv("SERVERLESS_CHECK_TOPIC"),
-        "CLIENT_DB_TABLE" to System.getenv("CLIENT_DB_TABLE")
+        "CLIENT_DB_TABLE" to System.getenv("CLIENT_DB_TABLE"),
+        "CHECK_RESULTS_DB_TABLE" to System.getenv("CHECK_RESULTS_DB_TABLE")
 )
 
 /**

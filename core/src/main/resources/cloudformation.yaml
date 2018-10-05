@@ -23,6 +23,7 @@ Resources:
         Variables:
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
           CLIENT_DB_TABLE: !Ref MonitoringClientsTable
+          CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultsQueue
       Tags:
         - Key: App
           Value: Monitoring
@@ -62,6 +63,25 @@ Resources:
         Variables:
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
           SERVERLESS_CHECK_TOPIC: !Ref MonitoringServerlessCheckDistributor
+      Tags:
+        - Key: App
+          Value: Monitoring
+
+  MonitoringCheckResultReceiver:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Collect and save results returned from checks.
+      Runtime: java8
+      Handler: '${checkResultReceiver}'
+      Code:
+        S3Bucket: '${codeS3Bucket}'
+        S3Key: '${codeS3Key}'
+      Role: !GetAtt MonitoringCheckResultReceiverRole.Arn
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          CHECK_RESULTS_DB_TABLE: !Ref MonitoringCheckResultsTable
       Tags:
         - Key: App
           Value: Monitoring
@@ -187,12 +207,12 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - lambda.amazonaws.com
-          Action:
-            - sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
       Policies:
         - PolicyName: SNSTopics
           PolicyDocument:
@@ -204,6 +224,45 @@ Resources:
                 Resource:
                   - !Ref MonitoringClientCheckDistributor
                   - !Ref MonitoringServerlessCheckDistributor
+
+  MonitoringCheckResultReceiverRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /monitoring/
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: CheckResultsQueue
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:DeleteMessage
+                  - sqs:ChangeMessageVisibility
+                  - sqs:ReceiveMessage
+                  - sqs:GetQueueAttributes
+                Resource:
+                  - !GetAtt MonitoringCheckResultsQueue.Arn
+        - PolicyName: DynamoDBCheckResultsTable
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:PutItem
+                Resource:
+                  - !GetAtt MonitoringCheckResultsTable.Arn
 
   ##
   # Scheduled Events
@@ -238,6 +297,26 @@ Resources:
       StartingPosition: LATEST
       BatchSize: 10
 
+  MonitoringCheckResultsEvents:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: true
+      EventSourceArn: !GetAtt MonitoringCheckResultsQueue.Arn
+      FunctionName: !GetAtt MonitoringCheckResultReceiver.Arn
+      BatchSize: 10
+
+  ##
+  # SQS Queues
+  ##
+  MonitoringCheckResultsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      # Visibility timeout must be >= the Lambda function that consumes from it.
+      VisibilityTimeout: 65
+      Tags:
+        - Key: App
+          Value: Monitoring
+
   ##
   # SNS Topics
   ##
@@ -268,6 +347,26 @@ Resources:
         WriteCapacityUnits: 1
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: App
+          Value: Monitoring
+
+  MonitoringCheckResultsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: name
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: name
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
       Tags:
         - Key: App
           Value: Monitoring

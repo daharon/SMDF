@@ -38,6 +38,7 @@ class ClientRegistrationHandler : BaseRequestHandler() {
      * New client queues are subscribed to this SNS Topic.
      */
     private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { env.get("CLIENT_CHECK_TOPIC") }
+    private val SQS_CLIENT_RESULTS_QUEUE: String by lazy { env.get("CHECK_RESULTS_QUEUE") }
 
     companion object {
         private const val SNS_MESSAGE_ATTRIBUTE_TAGS = "tags"
@@ -96,9 +97,15 @@ class ClientRegistrationHandler : BaseRequestHandler() {
                             subscriptionArn = qns.subscriptionArn)
                     db.save(clientRecord)
                     log.info("Saved client to database:  $clientRecord")
-                    json.writeValueAsString(ClientRegistrationResponse(qns.queueArn))
+                    val clientRegRes = ClientRegistrationResponse(
+                            commandQueue = qns.queueUrl,
+                            resultQueue = SQS_CLIENT_RESULTS_QUEUE)
+                    json.writeValueAsString(clientRegRes)
                 } else {
-                    json.writeValueAsString(ClientRegistrationResponse(existingClient.queueArn))
+                    val clientRegRes = ClientRegistrationResponse(
+                            commandQueue = existingClient.queueUrl!!,
+                            resultQueue = SQS_CLIENT_RESULTS_QUEUE)
+                    json.writeValueAsString(clientRegRes)
                 }
 
                 APIGatewayProxyResponseEvent()
@@ -120,8 +127,10 @@ class ClientRegistrationHandler : BaseRequestHandler() {
                 log.info("Saved client to database:  $clientRecord")
 
                 // Response
-                val responseBody = json.writeValueAsString(
-                        ClientRegistrationResponse(qns.queueArn))
+                val clientRegRes = ClientRegistrationResponse(
+                        commandQueue = qns.queueUrl,
+                        resultQueue = SQS_CLIENT_RESULTS_QUEUE)
+                val responseBody = json.writeValueAsString(clientRegRes)
                 APIGatewayProxyResponseEvent()
                         .withStatusCode(200)
                         .withBody(responseBody)
