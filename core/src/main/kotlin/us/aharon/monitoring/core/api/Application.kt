@@ -24,6 +24,7 @@ import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
 import us.aharon.monitoring.core.backend.CheckScheduler
 import us.aharon.monitoring.core.backend.ClientCleanup
+import us.aharon.monitoring.core.backend.CheckResultReceiver
 
 
 /**
@@ -45,6 +46,7 @@ abstract class Application : KoinComponent {
     protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
     private val _checkScheduler by lazy { CheckScheduler() }
     private val _clientCleanup by lazy { ClientCleanup() }
+    private val _checkResultReceiver by lazy { CheckResultReceiver() }
 
 
     init {
@@ -87,9 +89,8 @@ abstract class Application : KoinComponent {
      */
     fun checkResultReceiver(event: SQSEvent, context: Context) {
         log.info("Received ${event.records.size} SQS messages.")
-        event.records.forEach {
-            log.info("Message body:  ${it.body}")
-        }
+        event.records.forEach { log.info("Message body:  ${it.body}") }
+        this._checkResultReceiver.run(event)
     }
 
     /**

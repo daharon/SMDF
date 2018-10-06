@@ -6,6 +6,7 @@ package us.aharon.monitoring.core.di
 
 import com.amazonaws.ClientConfiguration
 import com.amazonaws.client.builder.AwsClientBuilder
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
@@ -14,10 +15,14 @@ import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.AmazonSNSClientBuilder
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import mu.KLogger
 import mu.KotlinLogging
 import org.koin.dsl.module.module
 
+import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.ClientRecord
 import us.aharon.monitoring.core.util.Env
 
@@ -35,6 +40,11 @@ private const val LOCALSTACK_DYNAMODB_PORT = 4569
 internal val modules = module {
     single<Env> { Env(TEST_ENVIRONMENT_VARIABLES) }
     single<KLogger> { (name: String) -> KotlinLogging.logger(name) }
+    single<ObjectMapper> {
+        ObjectMapper()
+                .registerModule(JavaTimeModule())
+                .registerKotlinModule()
+    }
     single<AmazonSNS> {
         AmazonSNSClientBuilder.standard()
                 .withClientConfiguration(
@@ -61,10 +71,17 @@ internal val modules = module {
                 .withTableNameResolver { clazz: Class<*>, _: DynamoDBMapperConfig? ->
                     when (clazz) {
                         ClientRecord::class.java -> "CLIENTS_TABLE"
+                        CheckResultRecord::class.java -> "CHECK_RESULTS_TABLE"
                         else -> throw DynamoDBMappingException("Class must be defined in ${this::class.qualifiedName}")
                     }
                 }
                 .build()
         DynamoDBMapper(client, config)
+    }
+    single<AmazonDynamoDB> {
+        AmazonDynamoDBClientBuilder.standard()
+                .withEndpointConfiguration(
+                        AwsClientBuilder.EndpointConfiguration("http://localhost:$LOCALSTACK_DYNAMODB_PORT", "us-east-1"))
+                .build()
     }
 }

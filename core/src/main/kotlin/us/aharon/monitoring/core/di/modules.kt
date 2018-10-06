@@ -12,6 +12,7 @@ import com.amazonaws.services.sns.AmazonSNSClientBuilder
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import mu.KLogger
 import mu.KotlinLogging
@@ -25,7 +26,11 @@ internal val modules = module {
     single<Env> { Env() }
     single<KLogger> { (name: String) -> KotlinLogging.logger(name) }
     single<AmazonSNS> { AmazonSNSClientBuilder.standard().build() }
-    single<ObjectMapper> { ObjectMapper().registerKotlinModule() }
+    single<ObjectMapper> {
+        ObjectMapper()
+                .registerModule(JavaTimeModule())
+                .registerKotlinModule()
+    }
     single<DynamoDBMapper> {
         val client = AmazonDynamoDBClientBuilder.standard().build()
         val config = DynamoDBMapperConfig.builder()

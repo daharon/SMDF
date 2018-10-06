@@ -4,9 +4,9 @@
 
 package us.aharon.monitoring.core.db
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable
+import com.amazonaws.services.dynamodbv2.datamodeling.*
+
+import java.time.ZonedDateTime
 
 
 /**
@@ -20,6 +20,15 @@ internal data class CheckResultRecord(
         var name: String? = null,
 
         @DynamoDBRangeKey
-        var timestamp: String? = null
+        @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
+        @DynamoDBTypeConverted(converter = ZonedDateTimeConverter::class)
+        var timestamp: ZonedDateTime? = null,
+
+        @DynamoDBAttribute
+        @DynamoDBTypeConvertedEnum
+        var status: CheckResultStatus? = null,
+
+        @DynamoDBAttribute
+        var output: String? = null
 )
 
