@@ -23,7 +23,7 @@ Resources:
         Variables:
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
           CLIENT_DB_TABLE: !Ref MonitoringClientsTable
-          CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultsQueue
+          CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultQueue
       Tags:
         - Key: App
           Value: Monitoring
@@ -77,6 +77,25 @@ Resources:
         S3Bucket: '${codeS3Bucket}'
         S3Key: '${codeS3Key}'
       Role: !GetAtt MonitoringCheckResultReceiverRole.Arn
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          CHECK_RESULTS_DB_TABLE: !Ref MonitoringCheckResultsTable
+      Tags:
+        - Key: App
+          Value: Monitoring
+
+  MonitoringCheckResultProcessor:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Process results returned from checks.
+      Runtime: java8
+      Handler: '${checkResultProcessor}'
+      Code:
+        S3Bucket: '${codeS3Bucket}'
+        S3Key: '${codeS3Key}'
+      Role: !GetAtt MonitoringCheckResultProcessorRole.Arn
       Timeout: 60
       MemorySize: 512
       Environment:
@@ -252,7 +271,7 @@ Resources:
                   - sqs:ReceiveMessage
                   - sqs:GetQueueAttributes
                 Resource:
-                  - !GetAtt MonitoringCheckResultsQueue.Arn
+                  - !GetAtt MonitoringCheckResultQueue.Arn
         - PolicyName: DynamoDBCheckResultsTable
           PolicyDocument:
             Version: 2012-10-17
@@ -263,6 +282,35 @@ Resources:
                   - dynamodb:PutItem
                 Resource:
                   - !GetAtt MonitoringCheckResultsTable.Arn
+
+  MonitoringCheckResultProcessorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /monitoring/
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBCheckResultsTableStream
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource:
+                  - !GetAtt MonitoringCheckResultsTable.StreamArn
 
   ##
   # Scheduled Events
@@ -297,18 +345,27 @@ Resources:
       StartingPosition: LATEST
       BatchSize: 10
 
-  MonitoringCheckResultsEvents:
+  MonitoringCheckResultReceiverEvents:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       Enabled: true
-      EventSourceArn: !GetAtt MonitoringCheckResultsQueue.Arn
+      EventSourceArn: !GetAtt MonitoringCheckResultQueue.Arn
       FunctionName: !GetAtt MonitoringCheckResultReceiver.Arn
+      BatchSize: 10
+
+  MonitoringCheckResultProcessorEvents:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: true
+      EventSourceArn: !GetAtt MonitoringCheckResultsTable.StreamArn
+      FunctionName: !GetAtt MonitoringCheckResultProcessor.Arn
+      StartingPosition: LATEST
       BatchSize: 10
 
   ##
   # SQS Queues
   ##
-  MonitoringCheckResultsQueue:
+  MonitoringCheckResultQueue:
     Type: AWS::SQS::Queue
     Properties:
       # Visibility timeout must be >= the Lambda function that consumes from it.
@@ -367,6 +424,8 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
       Tags:
         - Key: App
           Value: Monitoring

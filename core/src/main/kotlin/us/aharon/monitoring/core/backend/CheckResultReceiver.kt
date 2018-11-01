@@ -28,7 +28,7 @@ internal class CheckResultReceiver : KoinComponent {
 
 
     fun run(event: SQSEvent) {
-        val records = event.records.mapNotNull {
+        val records: List<CheckResultRecord> = event.records.mapNotNull {
             try {
                 json.readValue<CheckResultRecord>(it.body)
             } catch (e: JsonMappingException) {

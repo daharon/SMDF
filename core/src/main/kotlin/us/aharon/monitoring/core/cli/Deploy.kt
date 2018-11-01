@@ -180,6 +180,7 @@ internal class Deploy : Runnable {
      */
     private fun uploadCloudFormationTemplate(template: String): String {
         val templateFilename = "cfn-template-${System.currentTimeMillis()}.yaml"
+        println("Uploading $templateFilename")
         val s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(region)
                 .build()
@@ -217,6 +218,7 @@ internal class Deploy : Runnable {
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",
                 "clientCleanupHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientCleanup.name}",
                 "checkResultReceiver" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultReceiver.name}",
+                "checkResultProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultProcessor.name}",
                 "codeS3Bucket" to s3Dest,
                 "codeS3Key" to getJarFilename(parent.app::class)
         )

@@ -25,6 +25,7 @@ import us.aharon.monitoring.core.mutators.Mutator
 import us.aharon.monitoring.core.backend.CheckScheduler
 import us.aharon.monitoring.core.backend.ClientCleanup
 import us.aharon.monitoring.core.backend.CheckResultReceiver
+import us.aharon.monitoring.core.backend.CheckResultProcessor
 
 
 /**
@@ -44,9 +45,11 @@ abstract class Application : KoinComponent {
     abstract val mutators: List<Mutator>
 
     protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
+
     private val _checkScheduler by lazy { CheckScheduler() }
     private val _clientCleanup by lazy { ClientCleanup() }
     private val _checkResultReceiver by lazy { CheckResultReceiver() }
+    private val _checkResultProcessor by lazy { CheckResultProcessor() }
 
 
     init {
@@ -101,7 +104,8 @@ abstract class Application : KoinComponent {
      * - Flapping detection?
      */
     fun checkResultProcessor(event: DynamodbEvent, context: Context) {
-        TODO("Implement check result processor.")
+        log.info("DynamoDB stream event: $event")
+        this._checkResultProcessor.run(event)
     }
 
     /**
