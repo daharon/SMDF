@@ -182,6 +182,8 @@ class ClientRegistrationHandler : BaseRequestHandler() {
                         "FilterPolicy" to json.writeValueAsString(mapOf(
                                 SNS_MESSAGE_ATTRIBUTE_TAGS to tags
                         ))
+                        // TODO:  Enable raw message delivery.
+                        //"RawMessageDelivery" to true.toString()
                 ))
         val subscribeResult = sns.subscribe(subscribeRequest)
         log.info("Subscribed queue to SNS topic:  ${subscribeResult.subscriptionArn}")

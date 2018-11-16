@@ -144,6 +144,7 @@ internal class CheckScheduler : KoinComponent {
                     .withTopicArn(SNS_SERVERLESS_CHECK_TOPIC_ARN)
                     .withMessage(jsonMessage)
             log.info { "SNS publish request:\n$publishReq" }
+            // TODO:  Implement serverless check executor.
             val result = snsClient.publish(publishReq)
             log.info { "Published message ID:  ${result.messageId}" }
         }

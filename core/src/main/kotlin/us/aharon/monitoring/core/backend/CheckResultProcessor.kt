@@ -27,9 +27,16 @@ internal class CheckResultProcessor : KoinComponent {
 
 
     fun run(event: DynamodbEvent) = event.records.forEach {
+        // TODO:  Minimum viable functionality.
+        // Was there a state change?
+        // For each event, read from the database the previous event.
+        // If there was a state change, send to notification handler queue.
         when (OperationType.fromValue(it.eventName)) {
+            // MODIFY should not happen.  Ignore.
             OperationType.MODIFY -> log.info("Received MODIFY event.")
+            // REMOVE - Ignore.
             OperationType.REMOVE -> log.info("Received REMOVE event.")
+            // Handle INSERT.
             OperationType.INSERT -> log.info("Received INSERT event.")
             else -> log.error("Unknown event name provided:  ${it.eventName}")
         }

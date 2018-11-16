@@ -17,6 +17,9 @@ import java.time.ZonedDateTime
 @DynamoDBTable(tableName = "DYNAMICALLY_DEFINED")
 internal data class CheckResultRecord(
         @DynamoDBHashKey
+        var group: String? = null,
+
+        @DynamoDBHashKey
         var name: String? = null,
 
         @DynamoDBRangeKey
