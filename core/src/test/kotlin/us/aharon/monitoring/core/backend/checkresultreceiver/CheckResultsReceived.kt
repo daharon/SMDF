@@ -47,16 +47,22 @@ class CheckResultsReceived : BaseTest() {
                     "output" to "OK: This check is A-OK."
             ),
             mapOf(
-                    "name" to "server-3.example.com",
+                    "name" to "server-2.example.com",
                     "timestamp" to "2018-08-23T11:43:00Z",
                     "status" to CheckResultStatus.WARNING.name,
                     "output" to "WARNING: We're heading for a bad time."
             ),
             mapOf(
-                    "name" to "server-2.example.com",
+                    "name" to "server-3.example.com",
                     "timestamp" to "2018-08-23T11:41:00Z",
                     "status" to CheckResultStatus.CRITICAL.name,
                     "output" to "CRITICAL: This check failed."
+            ),
+            mapOf(
+                    "name" to "server-4.example.com",
+                    "timestamp" to "2018-08-23T11:44:00Z",
+                    "status" to CheckResultStatus.UNKNOWN.name,
+                    "output" to "CRITICAL: This check did not run."
             )
     ))
 
@@ -112,6 +118,6 @@ class CheckResultsReceived : BaseTest() {
         val scan = DynamoDBScanExpression()
         val results = db.scan(CheckResultRecord::class.java, scan)
 
-        assertEquals(3, results.size)
+        assertEquals(4, results.size)
     }
 }
