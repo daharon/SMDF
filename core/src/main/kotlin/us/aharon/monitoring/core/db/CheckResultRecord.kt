@@ -16,22 +16,31 @@ import java.time.ZonedDateTime
  */
 @DynamoDBTable(tableName = "DYNAMICALLY_DEFINED")
 internal data class CheckResultRecord(
-        @DynamoDBHashKey
-        var group: String? = null,
-
-        @DynamoDBHashKey
-        var name: String? = null,
-
         @DynamoDBRangeKey
         @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
         @DynamoDBTypeConverted(converter = ZonedDateTimeConverter::class)
         var timestamp: ZonedDateTime? = null,
 
         @DynamoDBAttribute
+        var group: String? = null,
+        @DynamoDBAttribute
+        var name: String? = null,
+        @DynamoDBAttribute
+        var client: String? = null,
+        @DynamoDBAttribute
         @DynamoDBTypeConvertedEnum
         var status: CheckResultStatus? = null,
-
         @DynamoDBAttribute
         var output: String? = null
-)
+) {
+    @DynamoDBHashKey
+    var id: String? = null
+            get() = generateId(this.group!!, this.name!!, this.client!!)
+
+
+    companion object {
+        fun generateId(group: String, name: String, client: String): String =
+                "${group}_${name}_${client}"
+    }
+}
 

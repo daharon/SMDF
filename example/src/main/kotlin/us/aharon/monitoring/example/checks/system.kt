@@ -15,7 +15,7 @@ import us.aharon.monitoring.example.handlers.DefaultHandler
 /**
  * Example check group.
  */
-val SYSTEM_CHECKS = checks {
+val SYSTEM_CHECKS = checks("system") {
 
     /**
      * Client Check example.

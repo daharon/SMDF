@@ -10,7 +10,7 @@ import us.aharon.monitoring.core.api.checks
 /**
  * Check for testing the monitoring client.
  */
-val TEST_CLIENT_CHECKS = checks {
+val TEST_CLIENT_CHECKS = checks("test") {
 
     mapOf(
             "Ok check"       to "echo 'Checking OK' && exit 0",

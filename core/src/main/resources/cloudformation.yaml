@@ -412,15 +412,13 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: group
-          AttributeType: S
-        - AttributeName: name
+        - AttributeName: id
           AttributeType: S
         - AttributeName: timestamp
           AttributeType: S
       KeySchema:
-        - AttributeName: name
-          AttributeType: S
+        - AttributeName: id
+          KeyType: HASH
         - AttributeName: timestamp
           KeyType: RANGE
       ProvisionedThroughput:
