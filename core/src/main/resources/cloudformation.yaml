@@ -311,6 +311,15 @@ Resources:
                   - dynamodb:ListStreams
                 Resource:
                   - !GetAtt MonitoringCheckResultsTable.StreamArn
+        - PolicyName: DynamoDBCheckResultsTable
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt MonitoringCheckResultsTable.Arn
 
   ##
   # Scheduled Events

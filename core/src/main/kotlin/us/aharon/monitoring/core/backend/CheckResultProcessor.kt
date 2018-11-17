@@ -4,13 +4,19 @@
 
 package us.aharon.monitoring.core.backend
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
+import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
-import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KLogger
 import org.koin.core.parameter.parametersOf
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
+
+import us.aharon.monitoring.core.db.CheckResultRecord
+import us.aharon.monitoring.core.db.CheckResultStatus
+import us.aharon.monitoring.core.db.ZonedDateTimeConverter
 
 
 /**
@@ -23,22 +29,60 @@ import org.koin.standalone.inject
 internal class CheckResultProcessor : KoinComponent {
 
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
-    private val json: ObjectMapper by inject()
+    private val db: DynamoDBMapper by inject()
 
 
+    /**
+     * For each event, read from the database the previous event.
+     * If there was a state change, send to the notification handler queue.
+     */
     fun run(event: DynamodbEvent) = event.records.forEach {
         // TODO:  Minimum viable functionality.
-        // Was there a state change?
-        // For each event, read from the database the previous event.
-        // If there was a state change, send to notification handler queue.
         when (OperationType.fromValue(it.eventName)) {
-            // MODIFY should not happen.  Ignore.
-            OperationType.MODIFY -> log.info("Received MODIFY event.")
-            // REMOVE - Ignore.
-            OperationType.REMOVE -> log.info("Received REMOVE event.")
-            // Handle INSERT.
-            OperationType.INSERT -> log.info("Received INSERT event.")
+            OperationType.INSERT -> {
+                log.info("Received INSERT event.")
+                val newCheckResultRecord = db.marshallIntoObject(CheckResultRecord::class.java, it.dynamodb.newImage)
+                val previousCheckResultRecord = previousRecord(newCheckResultRecord)
+                log.info("Previous record:  $previousCheckResultRecord")
+                if (previousCheckResultRecord == null) {
+                    // This is the first time this check has run on the client.
+                    if (newCheckResultRecord.status != CheckResultStatus.OK) {
+                        sendToNotificationHandler(null, newCheckResultRecord)
+                    }
+                } else {
+                    log.info("Previous status: ${previousCheckResultRecord.status}, New status: ${newCheckResultRecord.status}")
+                    if (previousCheckResultRecord.status != newCheckResultRecord.status) {
+                        sendToNotificationHandler(null, newCheckResultRecord)
+                    }
+                }
+            }
+            OperationType.MODIFY -> log.info("Ignoring MODIFY event.")
+            OperationType.REMOVE -> log.info("Ignoring REMOVE event.")
             else -> log.error("Unknown event name provided:  ${it.eventName}")
         }
+    }
+
+    /**
+     * Query the database for the previous record and return its status.
+     */
+    private fun previousRecord(newRecord: CheckResultRecord): CheckResultRecord? {
+        val query = DynamoDBQueryExpression<CheckResultRecord>()
+                .withKeyConditionExpression("#id = :id AND #timestamp < :timestamp")
+                .withExpressionAttributeValues(mapOf(
+                        ":id" to AttributeValue(newRecord.id),
+                        ":timestamp" to AttributeValue(ZonedDateTimeConverter().convert(newRecord.timestamp!!))))
+                .withExpressionAttributeNames(mapOf("#id" to "id", "#timestamp" to "timestamp"))
+                .withScanIndexForward(false)
+                .withLimit(1)
+        val result = db.query(CheckResultRecord::class.java, query)
+        return result.firstOrNull()
+    }
+
+    /**
+     * State change requires a notification.
+     */
+    private fun sendToNotificationHandler(old: CheckResultRecord?, new: CheckResultRecord) {
+        // TODO:  Send message to the notification handler queue.
+        log.info("State change from ${old?.status} to ${new.status}.")
     }
 }
