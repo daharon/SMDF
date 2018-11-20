@@ -311,6 +311,15 @@ Resources:
                   - dynamodb:ListStreams
                 Resource:
                   - !GetAtt MonitoringCheckResultsTable.StreamArn
+        - PolicyName: DynamoDBCheckResultsTable
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt MonitoringCheckResultsTable.Arn
 
   ##
   # Scheduled Events
@@ -412,12 +421,12 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: name
+        - AttributeName: id
           AttributeType: S
         - AttributeName: timestamp
           AttributeType: S
       KeySchema:
-        - AttributeName: name
+        - AttributeName: id
           KeyType: HASH
         - AttributeName: timestamp
           KeyType: RANGE

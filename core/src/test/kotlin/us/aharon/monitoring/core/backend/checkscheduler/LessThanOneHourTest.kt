@@ -42,7 +42,7 @@ class LessThanOneHourTest : BaseTest() {
         val minute = 5
         val time = DateTime(2018, 1, 1, 0, minute, DateTimeZone.UTC)
         val checks = listOf(
-                checks {
+                checks("test") {
                     check(checkName) {
                         interval = 5  // Minutes
                     }
@@ -71,7 +71,7 @@ class LessThanOneHourTest : BaseTest() {
         val minute = 5
         val time = DateTime(2018, 1, 1, 0, minute, DateTimeZone.UTC)
         val checks = listOf(
-                checks {
+                checks("test") {
                     serverlessCheck(checkName) {
                         interval = 5  // Minutes
                     }

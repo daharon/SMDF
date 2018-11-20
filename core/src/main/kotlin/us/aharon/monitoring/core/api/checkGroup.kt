@@ -7,6 +7,6 @@ package us.aharon.monitoring.core.api
 import us.aharon.monitoring.core.checks.CheckGroup
 
 
-inline fun checks(block: CheckGroup.() -> Unit): CheckGroup =
-        CheckGroup().apply(block)
+inline fun checks(name: String, block: CheckGroup.() -> Unit): CheckGroup =
+        CheckGroup(name).apply(block)
 

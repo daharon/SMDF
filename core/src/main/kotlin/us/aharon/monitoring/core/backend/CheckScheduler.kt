@@ -24,18 +24,22 @@ import us.aharon.monitoring.core.util.joinToSNSMessageAttributeStringValue
 import java.util.concurrent.TimeUnit
 
 
+private sealed class CheckMessage
+
 private data class ClientCheckMessage(
+        val group: String,
         val name: String,
         val command: String,
         val timeout: Int,
         val subscribers: List<String>
-)
+) : CheckMessage()
 
 private data class ServerlessCheckMessage(
+        val group: String,
         val name: String,
         val executor: String,
         val timeout: Int
-)
+) : CheckMessage()
 
 internal class CheckScheduler : KoinComponent {
 
@@ -62,25 +66,27 @@ internal class CheckScheduler : KoinComponent {
         log.info { "$minutes minutes since the epoch." }
 
         // Iterate through the checks and determine which should be scheduled now.
-        val scheduleChecks = mutableListOf<Check>()
-        checks.forEach { checkGroup ->
-            scheduleChecks += checkGroup.checks.filter {
+        val scheduleChecks: List<CheckMessage> = checks.map { checkGroup ->
+            checkGroup.checks.filter {
                 scheduleCheck(minutes, it)
+            }.mapNotNull<Check, CheckMessage> {
+                when (it) {
+                    is ClientCheck -> ClientCheckMessage(checkGroup.name, it.name, it.command, it.timeout, it.subscribers)
+                    is ServerlessCheck -> ServerlessCheckMessage(checkGroup.name, it.name, it.executor.java.name, it.timeout)
+                    else -> {
+                        log.error("Unknown check type:  ${it::class.qualifiedName}")
+                        null
+                    }
+                }
             }
-        }
-        log.info { "Scheduling the following checks:  ${scheduleChecks.map { it.name }}" }
+        }.flatten()
+        log.info { "Scheduling the following checks:  $scheduleChecks" }
 
         // Construct the check objects to send to the SNS topic.
         val clientChecks: List<ClientCheckMessage> = scheduleChecks
-                .filterIsInstance(ClientCheck::class.java)
-                .map {
-                    ClientCheckMessage(it.name, it.command, it.timeout, it.subscribers)
-                }
+                .filterIsInstance(ClientCheckMessage::class.java)
         val serverlessChecks: List<ServerlessCheckMessage> = scheduleChecks
-                .filterIsInstance(ServerlessCheck::class.java)
-                .map {
-                    ServerlessCheckMessage(it.name, it.executor.java.name, it.timeout)
-                }
+                .filterIsInstance(ServerlessCheckMessage::class.java)
 
         // Send the client check messages to the SNS topic.
         sendClientChecks(clientChecks)
@@ -144,6 +150,7 @@ internal class CheckScheduler : KoinComponent {
                     .withTopicArn(SNS_SERVERLESS_CHECK_TOPIC_ARN)
                     .withMessage(jsonMessage)
             log.info { "SNS publish request:\n$publishReq" }
+            // TODO:  Implement serverless check executor.
             val result = snsClient.publish(publishReq)
             log.info { "Published message ID:  ${result.messageId}" }
         }

@@ -5,7 +5,7 @@
 package us.aharon.monitoring.core.checks
 
 
-class CheckGroup {
+class CheckGroup(val name: String) {
 
     val checks: MutableList<Check> = mutableListOf()
 }

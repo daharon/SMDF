@@ -33,7 +33,9 @@ class CheckResultsReceived : BaseTest() {
     private val db: DynamoDBMapper by inject()
     private val singleTestEvent = SQSTestEvent(listOf(
             mapOf(
-                    "name" to "server-1.example.com",
+                    "group" to "test",
+                    "name" to "simple_check",
+                    "client" to "test-client-1.example.com",
                     "timestamp" to "2018-08-23T11:39:44Z",
                     "status" to CheckResultStatus.OK.name,
                     "output" to "OK: This check is A-OK"
@@ -41,28 +43,36 @@ class CheckResultsReceived : BaseTest() {
     ))
     private val multipleTestEvents = SQSTestEvent(listOf(
             mapOf(
-                    "name" to "server-1.example.com",
+                    "group" to "test",
+                    "name" to "ok_check",
+                    "client" to "test-client-1.example.com",
                     "timestamp" to "2018-08-23T11:39:44Z",
                     "status" to CheckResultStatus.OK.name,
                     "output" to "OK: This check is A-OK."
             ),
             mapOf(
-                    "name" to "server-2.example.com",
+                    "group" to "test",
+                    "name" to "warning_check",
+                    "client" to "test-client-1.example.com",
                     "timestamp" to "2018-08-23T11:43:00Z",
                     "status" to CheckResultStatus.WARNING.name,
                     "output" to "WARNING: We're heading for a bad time."
             ),
             mapOf(
-                    "name" to "server-3.example.com",
+                    "group" to "test",
+                    "name" to "critical_check",
+                    "client" to "test-client-1.example.com",
                     "timestamp" to "2018-08-23T11:41:00Z",
                     "status" to CheckResultStatus.CRITICAL.name,
                     "output" to "CRITICAL: This check failed."
             ),
             mapOf(
-                    "name" to "server-4.example.com",
+                    "group" to "test",
+                    "name" to "unknown_check",
+                    "client" to "test-client-1.example.com",
                     "timestamp" to "2018-08-23T11:44:00Z",
                     "status" to CheckResultStatus.UNKNOWN.name,
-                    "output" to "CRITICAL: This check did not run."
+                    "output" to "UNKNOWN: This check did not run."
             )
     ))
 
@@ -89,20 +99,23 @@ class CheckResultsReceived : BaseTest() {
 
         // Query the database to verify that the expected data is saved.
         val query = DynamoDBQueryExpression<CheckResultRecord>()
-                .withKeyConditionExpression("#name = :name and #timestamp = :timestamp")
+                .withKeyConditionExpression("#id = :id and #timestamp = :timestamp")
                 .withExpressionAttributeValues(mapOf(
-                        ":name" to AttributeValue("server-1.example.com"),
+                        ":id" to AttributeValue(CheckResultRecord.generateId(
+                                "test", "simple_check", "test-client-1.example.com")),
                         ":timestamp" to AttributeValue("2018-08-23T11:39:44Z")
                 ))
                 .withExpressionAttributeNames(mapOf(
-                        "#name" to "name",
+                        "#id" to "id",
                         "#timestamp" to "timestamp"
                 ))
         val results = db.query(CheckResultRecord::class.java, query)
 
         assertEquals(1, results.size)
         with(results.first()) {
-            assertEquals("server-1.example.com", this.name)
+            assertEquals("test", this.group)
+            assertEquals("simple_check", this.name)
+            assertEquals("test-client-1.example.com", this.client)
             assertEquals(ZonedDateTime.parse("2018-08-23T11:39:44Z"), this.timestamp)
             assertEquals(CheckResultStatus.OK, this.status)
             assertEquals("OK: This check is A-OK", this.output)
