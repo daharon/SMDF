@@ -4,7 +4,7 @@
     <parent>
         <artifactId>monitoring</artifactId>
         <groupId>us.aharon</groupId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -16,8 +16,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <aws.java.sdk.version>1.11.438</aws.java.sdk.version>
-        <koin.version>1.0.1</koin.version>
+        <aws.java.sdk.version>1.11.453</aws.java.sdk.version>
+        <koin.version>1.0.2</koin.version>
     </properties>
 
     <repositories>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
-            <version>3.5.2</version>
+            <version>3.8.0</version>
         </dependency>
 
         <!-- JSON -->
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>io.github.microutils</groupId>
             <artifactId>kotlin-logging</artifactId>
-            <version>1.5.9</version>
+            <version>1.6.20</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-events</artifactId>
-            <version>2.2.2</version>
+            <version>2.2.4</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -110,14 +110,14 @@
         <dependency>
             <groupId>org.koin</groupId>
             <artifactId>koin-test</artifactId>
-            <version>1.0.0-RC-2</version>
+            <version>${koin.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>cloud.localstack</groupId>
             <artifactId>localstack-utils</artifactId>
-            <version>0.1.14</version>
+            <version>0.1.15</version>
             <scope>test</scope>
         </dependency>
 
