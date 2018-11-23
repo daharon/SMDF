@@ -9,6 +9,9 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
+import com.amazonaws.services.sqs.AmazonSQS
+import com.amazonaws.services.sqs.model.SendMessageRequest
+import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KLogger
 import org.koin.core.parameter.parametersOf
 import org.koin.standalone.KoinComponent
@@ -17,6 +20,7 @@ import org.koin.standalone.inject
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
 import us.aharon.monitoring.core.db.ZonedDateTimeConverter
+import us.aharon.monitoring.core.util.Env
 
 
 /**
@@ -29,7 +33,12 @@ import us.aharon.monitoring.core.db.ZonedDateTimeConverter
 internal class CheckResultProcessor : KoinComponent {
 
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
+    private val env: Env by inject()
+    private val json: ObjectMapper by inject()
     private val db: DynamoDBMapper by inject()
+    private val sqs: AmazonSQS by inject()
+
+    private val NOTIFICATION_QUEUE: String by lazy { env.get("NOTIFICATION_QUEUE") }
 
 
     /**
@@ -52,7 +61,7 @@ internal class CheckResultProcessor : KoinComponent {
                 } else {
                     log.info("Previous status: ${previousCheckResultRecord.status}, New status: ${newCheckResultRecord.status}")
                     if (previousCheckResultRecord.status != newCheckResultRecord.status) {
-                        sendToNotificationHandler(null, newCheckResultRecord)
+                        sendToNotificationHandler(previousCheckResultRecord, newCheckResultRecord)
                     }
                 }
             }
@@ -82,7 +91,12 @@ internal class CheckResultProcessor : KoinComponent {
      * State change requires a notification.
      */
     private fun sendToNotificationHandler(old: CheckResultRecord?, new: CheckResultRecord) {
-        // TODO:  Send message to the notification handler queue.
         log.info("State change from ${old?.status} to ${new.status}.")
+        val message = json.writeValueAsString(new)
+        val req = SendMessageRequest()
+                .withQueueUrl(NOTIFICATION_QUEUE)
+                .withMessageBody(message)
+        val result = sqs.sendMessage(req)
+        log.info("Send message to notification queue:  ${result.messageId}")
     }
 }

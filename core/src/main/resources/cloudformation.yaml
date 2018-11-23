@@ -101,6 +101,7 @@ Resources:
       Environment:
         Variables:
           CHECK_RESULTS_DB_TABLE: !Ref MonitoringCheckResultsTable
+          NOTIFICATION_QUEUE: !Ref MonitoringNotificationQueue
       Tags:
         - Key: App
           Value: Monitoring
@@ -320,6 +321,15 @@ Resources:
                   - dynamodb:Query
                 Resource:
                   - !GetAtt MonitoringCheckResultsTable.Arn
+        - PolicyName: NotificationQueue
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource:
+                  - !GetAtt MonitoringNotificationQueue.Arn
 
   ##
   # Scheduled Events
@@ -371,10 +381,27 @@ Resources:
       StartingPosition: LATEST
       BatchSize: 10
 
+#  MonitoringNotificationHandlerEvents:
+#    Type: AWS::Lambda::EventSourceMapping
+#    Properties:
+#      Enabled: true
+#      EventSourceArn: !GetAtt MonitoringNotificationQueue.Arn
+#      FunctionName: !GetAtt MonitoringNotificationHandler.Arn
+#      BatchSize: 1
+
   ##
   # SQS Queues
   ##
   MonitoringCheckResultQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      # Visibility timeout must be >= the Lambda function that consumes from it.
+      VisibilityTimeout: 65
+      Tags:
+        - Key: App
+          Value: Monitoring
+
+  MonitoringNotificationQueue:
     Type: AWS::SQS::Queue
     Properties:
       # Visibility timeout must be >= the Lambda function that consumes from it.
