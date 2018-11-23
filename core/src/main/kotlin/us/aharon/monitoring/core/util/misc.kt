@@ -4,6 +4,9 @@
 
 package us.aharon.monitoring.core.util
 
+import com.amazonaws.util.BinaryUtils
+import com.amazonaws.util.Md5Utils
+
 import us.aharon.monitoring.core.api.Application
 
 import java.io.File
@@ -21,3 +24,11 @@ internal fun getJarAbsolutePath(clazz: KClass<out Application>): String =
  */
 internal fun List<String>.joinToSNSMessageAttributeStringValue(): String =
         this.joinToString("\", \"", "[\"", "\"]")
+
+/**
+ * Convert to an MD5 hexadecimal [String].
+ */
+internal fun String.toMd5HexString(): String {
+    val hash = Md5Utils.computeMD5Hash(this.toByteArray())
+    return BinaryUtils.toHex(hash).toUpperCase()
+}

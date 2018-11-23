@@ -6,6 +6,8 @@ package us.aharon.monitoring.core.db
 
 import com.amazonaws.services.dynamodbv2.datamodeling.*
 
+import us.aharon.monitoring.core.util.toMd5HexString
+
 import java.time.ZonedDateTime
 
 
@@ -40,7 +42,8 @@ internal data class CheckResultRecord(
 
     companion object {
         fun generateId(group: String, name: String, client: String): String =
-                "${group}_${name}_${client}"
+                // Convert to an MD5 hash because the existing ID could end up being too long.
+                "${group}_${name}_${client}".toMd5HexString()
     }
 }
 
