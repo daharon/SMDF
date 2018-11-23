@@ -106,6 +106,24 @@ Resources:
         - Key: App
           Value: Monitoring
 
+  MonitoringNotificationProcessor:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Run notification handlers.
+      Runtime: java8
+      Handler: '${notificationProcessor}'
+      Code:
+        S3Bucket: '${codeS3Bucket}'
+        S3Key: '${codeS3Key}'
+      Role: !GetAtt MonitoringNotificationProcessorRole.Arn
+      # Long timeout to give user some more flexibility.
+      Timeout: 300
+      # Maximum memory size, since this will run non-core code.
+      MemorySize: 3008
+      Tags:
+        - Key: App
+          Value: Monitoring
+
   ##
   # IAM Roles
   ##
@@ -331,6 +349,35 @@ Resources:
                 Resource:
                   - !GetAtt MonitoringNotificationQueue.Arn
 
+  MonitoringNotificationProcessorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /monitoring/
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: NotificationQueue
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:DeleteMessage
+                  - sqs:ChangeMessageVisibility
+                  - sqs:ReceiveMessage
+                  - sqs:GetQueueAttributes
+                Resource:
+                  - !GetAtt MonitoringNotificationQueue.Arn
+
   ##
   # Scheduled Events
   ##
@@ -381,13 +428,13 @@ Resources:
       StartingPosition: LATEST
       BatchSize: 10
 
-#  MonitoringNotificationHandlerEvents:
-#    Type: AWS::Lambda::EventSourceMapping
-#    Properties:
-#      Enabled: true
-#      EventSourceArn: !GetAtt MonitoringNotificationQueue.Arn
-#      FunctionName: !GetAtt MonitoringNotificationHandler.Arn
-#      BatchSize: 1
+  MonitoringNotificationProcessorEvents:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: true
+      EventSourceArn: !GetAtt MonitoringNotificationQueue.Arn
+      FunctionName: !GetAtt MonitoringNotificationProcessor.Arn
+      BatchSize: 1
 
   ##
   # SQS Queues
@@ -405,7 +452,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       # Visibility timeout must be >= the Lambda function that consumes from it.
-      VisibilityTimeout: 65
+      VisibilityTimeout: 305
       Tags:
         - Key: App
           Value: Monitoring

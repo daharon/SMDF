@@ -213,14 +213,17 @@ internal class Deploy : Runnable {
         }
         val templateCfn = templateConfig.getTemplate(CLOUDFORMATION_TEMPLATE)
         val templateData = mapOf<String, Any>(
+                // Code
+                "codeS3Bucket" to s3Dest,
+                "codeS3Key" to getJarFilename(parent.app::class),
+                // Functions
                 "clientRegistrationHandler" to
                         "${ClientRegistrationHandler::class.java.canonicalName}::${ClientRegistrationHandler::handleRequest.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",
                 "clientCleanupHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientCleanup.name}",
                 "checkResultReceiver" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultReceiver.name}",
                 "checkResultProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultProcessor.name}",
-                "codeS3Bucket" to s3Dest,
-                "codeS3Key" to getJarFilename(parent.app::class)
+                "notificationProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::notificationProcessor.name}"
         )
         val renderedTemplate = StringWriter()
         templateCfn.process(templateData, renderedTemplate)

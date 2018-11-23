@@ -16,16 +16,12 @@ import org.koin.standalone.StandAloneContext.startKoin
 import org.koin.standalone.inject
 import picocli.CommandLine
 
-import us.aharon.monitoring.core.events.NotificationEvent
+import us.aharon.monitoring.core.backend.*
 import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.cli.Base
 import us.aharon.monitoring.core.di.modules
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
-import us.aharon.monitoring.core.backend.CheckScheduler
-import us.aharon.monitoring.core.backend.ClientCleanup
-import us.aharon.monitoring.core.backend.CheckResultReceiver
-import us.aharon.monitoring.core.backend.CheckResultProcessor
 
 
 /**
@@ -50,6 +46,7 @@ abstract class Application : KoinComponent {
     private val _clientCleanup by lazy { ClientCleanup() }
     private val _checkResultReceiver by lazy { CheckResultReceiver() }
     private val _checkResultProcessor by lazy { CheckResultProcessor() }
+    private val _notificationProcessor by lazy { NotificationProcessor() }
 
 
     init {
@@ -113,8 +110,9 @@ abstract class Application : KoinComponent {
      *
      * - Apply the application defined Filters and Mutators before forwarding to the notification handler.
      */
-    fun notificationHandler(event: NotificationEvent, context: Context) {
-        TODO("Run the notification handler class.")
+    fun notificationProcessor(event: SQSEvent, context: Context) {
+        event.records.forEach { log.info("Message body:  ${it.body}") }
+        this._notificationProcessor.run(event)
     }
 
     /**

@@ -20,6 +20,7 @@ import org.koin.standalone.inject
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
 import us.aharon.monitoring.core.db.ZonedDateTimeConverter
+import us.aharon.monitoring.core.events.NotificationEvent
 import us.aharon.monitoring.core.util.Env
 
 
@@ -92,11 +93,19 @@ internal class CheckResultProcessor : KoinComponent {
      */
     private fun sendToNotificationHandler(old: CheckResultRecord?, new: CheckResultRecord) {
         log.info("State change from ${old?.status} to ${new.status}.")
-        val message = json.writeValueAsString(new)
+        // TODO: Send an individual notification event for each handler associated with this check.
+        val notificationEvent = NotificationEvent(
+                notificationHandler = null,
+                metadata = mapOf(
+                        "newResult" to new,
+                        "oldResult" to old
+                )
+        )
+        val message = json.writeValueAsString(notificationEvent)
         val req = SendMessageRequest()
                 .withQueueUrl(NOTIFICATION_QUEUE)
                 .withMessageBody(message)
         val result = sqs.sendMessage(req)
-        log.info("Send message to notification queue:  ${result.messageId}")
+        log.info("Sent message to notification queue:  ${result.messageId}")
     }
 }
