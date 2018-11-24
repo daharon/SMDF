@@ -18,6 +18,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="core" />
         <module name="example" />
+        <module name="monitoring-example" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

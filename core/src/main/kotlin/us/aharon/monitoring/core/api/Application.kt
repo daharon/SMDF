@@ -102,7 +102,7 @@ abstract class Application : KoinComponent {
      */
     fun checkResultProcessor(event: DynamodbEvent, context: Context) {
         log.info("DynamoDB stream event: $event")
-        this._checkResultProcessor.run(event)
+        this._checkResultProcessor.run(event, checks)
     }
 
     /**
@@ -112,7 +112,7 @@ abstract class Application : KoinComponent {
      */
     fun notificationProcessor(event: SQSEvent, context: Context) {
         event.records.forEach { log.info("Message body:  ${it.body}") }
-        this._notificationProcessor.run(event)
+        this._notificationProcessor.run(event, checks, context)
     }
 
     /**

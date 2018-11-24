@@ -18,7 +18,7 @@ import java.util.UUID
 /**
  * Generate an SQS test even as consumed from AWS Lambda functions.
  */
-class SQSTestEvent(messageBodies: List<Map<String, String>>) : SQSEvent(), KoinComponent {
+class SQSTestEvent(messageBodies: List<Map<String, Any>>) : SQSEvent(), KoinComponent {
 
     private val json: ObjectMapper by inject()
 

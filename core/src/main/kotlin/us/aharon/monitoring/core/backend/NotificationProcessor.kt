@@ -4,12 +4,19 @@
 
 package us.aharon.monitoring.core.backend
 
+import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import mu.KLogger
 import org.koin.core.parameter.parametersOf
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
+
+import us.aharon.monitoring.core.checks.CheckGroup
+import us.aharon.monitoring.core.checks.getCheck
+import us.aharon.monitoring.core.events.NotificationEvent
+import us.aharon.monitoring.core.handlers.NotificationHandler
 
 
 /**
@@ -27,8 +34,13 @@ internal class NotificationProcessor : KoinComponent {
     /**
      * For each event, run the specified handler.
      */
-    fun run(event: SQSEvent) = event.records.forEach { message ->
-        // TODO:  Implement.
-        log.info("TODO:  Run notification handler.")
+    fun run(event: SQSEvent, checks: List<CheckGroup>, context: Context) = event.records.forEach { message ->
+        val notification = json.readValue<NotificationEvent>(message.body)
+        val check = checks.getCheck(notification.checkResult?.group!!, notification.checkResult?.name!!)
+        log.info("Running notification handler:  ${notification.handler}")
+        // Create an instance of the handler given its fully qualified name.
+        val handler = Class.forName(notification.handler).newInstance() as NotificationHandler
+        // Execute the handler.
+        handler.execute(check, notification.checkResult!!, context)
     }
 }

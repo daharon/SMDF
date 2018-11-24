@@ -6,7 +6,7 @@ package us.aharon.monitoring.core.checks
 
 import kotlin.reflect.KClass
 
-import us.aharon.monitoring.core.handlers.Handler
+import us.aharon.monitoring.core.handlers.NotificationHandler
 
 
 /**
@@ -17,7 +17,7 @@ import us.aharon.monitoring.core.handlers.Handler
 class ClientCheck(override val name: String) : Check {
     override var interval: Int = 10
     override var notification: String = "Notification not set"
-    override var handlers: List<KClass<out Handler>> = emptyList()
+    override var handlers: List<KClass<out NotificationHandler>> = emptyList()
     override var highFlapThreshold: Int = 70  // TODO: Find appropriate default value.
     override var lowFlapThreshold: Int = 30  // TODO: Find appropriate default value.
     override var additional: Map<String, String?> = emptyMap()

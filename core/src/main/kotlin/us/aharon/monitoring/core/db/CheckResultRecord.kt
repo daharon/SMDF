@@ -17,7 +17,7 @@ import java.time.ZonedDateTime
  * The table name is dynamically defined in [TableNameResolver].
  */
 @DynamoDBTable(tableName = "DYNAMICALLY_DEFINED")
-internal data class CheckResultRecord(
+data class CheckResultRecord(
         @DynamoDBRangeKey
         @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
         @DynamoDBTypeConverted(converter = ZonedDateTimeConverter::class)
@@ -28,7 +28,7 @@ internal data class CheckResultRecord(
         @DynamoDBAttribute
         var name: String? = null,
         @DynamoDBAttribute
-        var client: String? = null,
+        var source: String? = null,
         @DynamoDBAttribute
         @DynamoDBTypeConvertedEnum
         var status: CheckResultStatus? = null,
@@ -37,13 +37,13 @@ internal data class CheckResultRecord(
 ) {
     @DynamoDBHashKey
     var id: String? = null
-            get() = generateId(this.group!!, this.name!!, this.client!!)
+            get() = generateId(this.group!!, this.name!!, this.source!!)
 
 
     companion object {
-        fun generateId(group: String, name: String, client: String): String =
+        fun generateId(group: String, name: String, source: String): String =
                 // Convert to an MD5 hash because the existing ID could end up being too long.
-                "${group}_${name}_${client}".toMd5HexString()
+                "${group}_${name}_${source}".toMd5HexString()
     }
 }
 

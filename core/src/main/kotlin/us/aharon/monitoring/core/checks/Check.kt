@@ -6,7 +6,7 @@ package us.aharon.monitoring.core.checks
 
 import kotlin.reflect.KClass
 
-import us.aharon.monitoring.core.handlers.Handler
+import us.aharon.monitoring.core.handlers.NotificationHandler
 
 
 interface Check {
@@ -17,7 +17,7 @@ interface Check {
      */
     var interval: Int
     var notification: String
-    var handlers: List<KClass<out Handler>>
+    var handlers: List<KClass<out NotificationHandler>>
     var highFlapThreshold: Int
     var lowFlapThreshold: Int
     var additional: Map<String, String?>

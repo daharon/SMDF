@@ -4,25 +4,22 @@
 
 package us.aharon.monitoring.example.handlers
 
-import us.aharon.monitoring.core.filters.Filter
-import us.aharon.monitoring.core.handlers.Event
-import us.aharon.monitoring.core.handlers.Handler
-import us.aharon.monitoring.core.mutators.Mutator
+import com.amazonaws.services.lambda.runtime.Context
+
+import us.aharon.monitoring.core.checks.Check
+import us.aharon.monitoring.core.db.CheckResultRecord
+import us.aharon.monitoring.core.handlers.NotificationHandler
 
 
 /**
  * https://docs.sensu.io/sensu-core/1.4/reference/handlers/#handler-configuration
  */
-class DefaultHandler : Handler {
+class DefaultHandler : NotificationHandler() {
 
-    override val filters = listOf<Filter>(
-//            ::exampleFilter
-    )
-    override val mutators = listOf<Mutator>(
-//            ::exampleMutator
-    )
+    override val policies: List<String> = emptyList()
 
-    override fun run(event: Event) {
-        TODO("Handler action")
+
+    override fun run(check: Check, checkResult: CheckResultRecord, ctx: Context) {
+        ctx.logger.log("${this::class.qualifiedName} received the following check result:  $checkResult")
     }
 }
