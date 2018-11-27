@@ -4,13 +4,13 @@
     <parent>
         <artifactId>monitoring</artifactId>
         <groupId>us.aharon</groupId>
-        <version>0.3.0</version>
+        <version>0.4.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>monitoring-example</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.3</version>
     <packaging>jar</packaging>
 
     <name>Monitoring Example</name>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>us.aharon</groupId>
             <artifactId>monitoring-core</artifactId>
-            <version>0.3.0</version>
+            <version>0.4.0</version>
         </dependency>
     </dependencies>
 

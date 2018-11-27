@@ -6,6 +6,7 @@ package us.aharon.monitoring.core.backend.checkscheduler
 
 import cloud.localstack.LocalstackExtension
 import com.amazonaws.services.sns.AmazonSNS
+import com.amazonaws.services.sqs.AmazonSQS
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.junit.jupiter.api.Test
@@ -25,17 +26,19 @@ import us.aharon.monitoring.core.BaseTest
 @ExtendWith(LocalstackExtension::class)
 class LessThanOneHourTest : BaseTest() {
 
+    private val sqs: AmazonSQS by inject()
+    private val sns: AmazonSNS by inject()
+
     companion object {
-        private const val CLIENT_CHECK_TOPIC = "TEST_CLIENT_CHECK_TOPIC"
-        private const val SERVERLESS_CHECK_TOPIC = "TEST_SERVERLESS_CHECK_TOPIC"
+        private const val CLIENT_CHECK_TOPIC = "CLIENT_CHECK_TOPIC"
+        private const val SERVERLESS_CHECK_QUEUE = "FAKE"
     }
+
 
     @Test
     fun `Client Check - Interval less than 1 hour`() {
-        // Create SNS Topics.
-        val snsClient: AmazonSNS by inject()
-        snsClient.createTopic(CLIENT_CHECK_TOPIC)
-        snsClient.createTopic(SERVERLESS_CHECK_TOPIC)
+        sns.createTopic(CLIENT_CHECK_TOPIC)
+        sqs.createQueue(SERVERLESS_CHECK_QUEUE)
 
         // Create application check.
         val checkName = "Interval < 1 hour"
@@ -61,10 +64,8 @@ class LessThanOneHourTest : BaseTest() {
 
     @Test
     fun `Serverless Check - Interval less than 1 hour`() {
-        // Create SNS Topics.
-        val snsClient: AmazonSNS by inject()
-        snsClient.createTopic(CLIENT_CHECK_TOPIC)
-        snsClient.createTopic(SERVERLESS_CHECK_TOPIC)
+        sns.createTopic(CLIENT_CHECK_TOPIC)
+        sqs.createQueue(SERVERLESS_CHECK_QUEUE)
 
         // Create application check.
         val checkName = "Interval < 1 hour"
@@ -84,7 +85,7 @@ class LessThanOneHourTest : BaseTest() {
         // Run the Lambda handler.
         CheckScheduler().run(time, checks)
 
-        // TODO: Read the message published to the SNS Topic and verify that it matches.
+        // TODO: Read the message published to the SQS queue and verify that it matches.
         assertEquals(expected.interval, checks.first().checks.first().interval)
     }
 }

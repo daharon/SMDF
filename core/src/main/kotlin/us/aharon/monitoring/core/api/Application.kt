@@ -47,6 +47,7 @@ abstract class Application : KoinComponent {
     private val _checkResultReceiver by lazy { CheckResultReceiver() }
     private val _checkResultProcessor by lazy { CheckResultProcessor() }
     private val _notificationProcessor by lazy { NotificationProcessor() }
+    private val _serverlessCheckProcessor by lazy { ServerlessCheckProcessor() }
 
 
     init {
@@ -122,5 +123,13 @@ abstract class Application : KoinComponent {
     fun clientCleanup(event: DynamodbEvent, context: Context) {
         log.info("DynamoDB stream event: $event")
         this._clientCleanup.run(event)
+    }
+
+    /**
+     * Run the specified serverless check.
+     */
+    fun serverlessCheckProcessor(event: SQSEvent, context: Context) {
+        event.records.forEach { log.info("Message body:  ${it.body}") }
+        this._serverlessCheckProcessor.run(event, checks, context)
     }
 }

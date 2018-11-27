@@ -48,13 +48,13 @@ class RemoveTest : BaseTest() {
     @BeforeEach
     fun createSNSTopic() {
         sns.createTopic("CLIENT_CHECK_TOPIC")
-        sns.createTopic("SERVERLESS_CHECK_TOPIC")
+        sqs.createQueue("SERVERLESS_CHECK_QUEUE")
     }
 
     @AfterEach
     fun deleteSNSTopic() {
         sns.deleteTopic("CLIENT_CHECK_TOPIC")
-        sns.deleteTopic("SERVERLESS_CHECK_TOPIC")
+        sqs.deleteQueue("SERVERLESS_CHECK_QUEUE")
     }
 
     @Test

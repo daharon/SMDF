@@ -7,6 +7,8 @@ package us.aharon.monitoring.core.backend
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.MessageAttributeValue
 import com.amazonaws.services.sns.model.PublishRequest
+import com.amazonaws.services.sqs.AmazonSQS
+import com.amazonaws.services.sqs.model.SendMessageRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KLogger
 import org.joda.time.DateTime
@@ -14,6 +16,7 @@ import org.koin.core.parameter.parametersOf
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
+import us.aharon.monitoring.core.backend.messages.*
 import us.aharon.monitoring.core.checks.Check
 import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.checks.ClientCheck
@@ -24,30 +27,16 @@ import us.aharon.monitoring.core.util.joinToSNSMessageAttributeStringValue
 import java.util.concurrent.TimeUnit
 
 
-private sealed class CheckMessage
-
-private data class ClientCheckMessage(
-        val group: String,
-        val name: String,
-        val command: String,
-        val timeout: Int,
-        val subscribers: List<String>
-) : CheckMessage()
-
-private data class ServerlessCheckMessage(
-        val group: String,
-        val name: String,
-        val executor: String,
-        val timeout: Int
-) : CheckMessage()
-
 internal class CheckScheduler : KoinComponent {
 
     private val env: Env by inject()
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
+    private val mapper: ObjectMapper by inject()
+    private val snsClient: AmazonSNS by inject()
+    private val sqs: AmazonSQS by inject()
 
     private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { env.get("CLIENT_CHECK_TOPIC") }
-    private val SNS_SERVERLESS_CHECK_TOPIC_ARN: String by lazy { env.get("SERVERLESS_CHECK_TOPIC") }
+    private val SQS_SERVERLESS_CHECK_QUEUE: String by lazy { env.get("SERVERLESS_CHECK_QUEUE") }
 
     companion object {
         private const val SNS_MESSAGE_ATTRIBUTE_TAGS = "tags"
@@ -71,8 +60,10 @@ internal class CheckScheduler : KoinComponent {
                 scheduleCheck(minutes, it)
             }.mapNotNull<Check, CheckMessage> {
                 when (it) {
-                    is ClientCheck -> ClientCheckMessage(checkGroup.name, it.name, it.command, it.timeout, it.subscribers)
-                    is ServerlessCheck -> ServerlessCheckMessage(checkGroup.name, it.name, it.executor.java.name, it.timeout)
+                    is ClientCheck -> ClientCheckMessage(
+                            checkGroup.name, it.name, it.command, it.timeout, it.subscribers)
+                    is ServerlessCheck -> ServerlessCheckMessage(
+                            checkGroup.name, it.name, it.executor.java.canonicalName, it.timeout)
                     else -> {
                         log.error("Unknown check type:  ${it::class.qualifiedName}")
                         null
@@ -112,27 +103,22 @@ internal class CheckScheduler : KoinComponent {
      *
      * @param clientChecks The [ClientCheckMessage]'s that have been scheduled.
      */
-    private fun sendClientChecks(clientChecks: List<ClientCheckMessage>) {
-        val mapper = ObjectMapper()
-        val snsClient: AmazonSNS by inject()
-
-        clientChecks.forEach { check ->
-            val jsonMessage = mapper.writeValueAsString(check)
-            val publishReq = PublishRequest()
-                    .withTopicArn(SNS_CLIENT_CHECK_TOPIC_ARN)
-                    .withMessage(jsonMessage)
-                    // Set message attributes so that the subscribed SQS queues can set filter policies.
-                    .withMessageAttributes(
-                            mapOf(
-                                    SNS_MESSAGE_ATTRIBUTE_TAGS to MessageAttributeValue()
-                                            .withDataType("String.Array")
-                                            .withStringValue(check.subscribers.joinToSNSMessageAttributeStringValue())
-                            )
-                    )
-            log.info { "SNS publish request:\n$publishReq" }
-            val result = snsClient.publish(publishReq)
-            log.info { "Published message ID:  ${result.messageId}" }
-        }
+    private fun sendClientChecks(clientChecks: List<ClientCheckMessage>) = clientChecks.forEach { check ->
+        val jsonMessage = mapper.writeValueAsString(check)
+        val publishReq = PublishRequest()
+                .withTopicArn(SNS_CLIENT_CHECK_TOPIC_ARN)
+                .withMessage(jsonMessage)
+                // Set message attributes so that the subscribed SQS queues can set filter policies.
+                .withMessageAttributes(
+                        mapOf(
+                                SNS_MESSAGE_ATTRIBUTE_TAGS to MessageAttributeValue()
+                                        .withDataType("String.Array")
+                                        .withStringValue(check.subscribers.joinToSNSMessageAttributeStringValue())
+                        )
+                )
+        log.info { "SNS publish request:\n$publishReq" }
+        val result = snsClient.publish(publishReq)
+        log.info { "Published message ID:  ${result.messageId}" }
     }
 
     /**
@@ -140,19 +126,13 @@ internal class CheckScheduler : KoinComponent {
      *
      * @param serverlessChecks The [ServerlessCheckMessage]'s that have been scheduled.
      */
-    private fun sendServerlessChecks(serverlessChecks: List<ServerlessCheckMessage>) {
-        val mapper = ObjectMapper()
-        val snsClient: AmazonSNS by inject()
-
-        serverlessChecks.forEach { check ->
-            val jsonMessage = mapper.writeValueAsString(check)
-            val publishReq = PublishRequest()
-                    .withTopicArn(SNS_SERVERLESS_CHECK_TOPIC_ARN)
-                    .withMessage(jsonMessage)
-            log.info { "SNS publish request:\n$publishReq" }
-            // TODO:  Implement serverless check executor.
-            val result = snsClient.publish(publishReq)
-            log.info { "Published message ID:  ${result.messageId}" }
-        }
+    private fun sendServerlessChecks(serverlessChecks: List<ServerlessCheckMessage>) = serverlessChecks.forEach { check ->
+        val jsonMessage = mapper.writeValueAsString(check)
+        val req = SendMessageRequest()
+                .withQueueUrl(SQS_SERVERLESS_CHECK_QUEUE)
+                .withMessageBody(jsonMessage)
+        log.info { "SQS send request:\n$req" }
+        val result = sqs.sendMessage(req)
+        log.info("Sent message to serverless check processor queue:  ${result.messageId}")
     }
 }

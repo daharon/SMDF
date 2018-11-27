@@ -4,8 +4,64 @@
 
 package us.aharon.monitoring.core.checks
 
+import com.amazonaws.services.lambda.runtime.Context
 
+import us.aharon.monitoring.core.db.CheckResultStatus
+
+
+/**
+ * The result object which all serverless checks must return.
+ */
+sealed class Result {
+    abstract val output: String
+    abstract val status: CheckResultStatus
+}
+data class Ok(override val output: String) : Result() {
+    override val status = CheckResultStatus.OK
+}
+data class Warning(override val output: String) : Result() {
+    override val status = CheckResultStatus.WARNING
+}
+data class Critical(override val output: String) : Result() {
+    override val status = CheckResultStatus.CRITICAL
+}
+data class Unknown(override val output: String) : Result() {
+    override val status = CheckResultStatus.WARNING
+}
+
+
+/**
+ * Abstract base class for all serverless checks.
+ *
+ * Implement the [run] method to perform your check.
+ * Return a [Result] indicating the status of the check.
+ */
 abstract class ServerlessExecutor {
 
-    abstract fun run(data: ServerlessCheck)
+    /**
+     * Specify IAM policies which this handler requires.
+     *
+     * - Policy documents.
+     * - Policy ARNs.
+     */
+    abstract val policies: List<String>
+
+    /**
+     * Implement this function.
+     */
+    abstract fun run(check: ServerlessCheck, ctx: Context): Result
+
+    /**
+     * Return an instance of this class from the [run] function.
+     */
+
+
+    /**
+     * Wrapper for the [run] function.
+     */
+    fun execute(check: ServerlessCheck, context: Context): Result = try {
+        this.run(check, context)
+    } catch (e: Exception) {
+        Critical(e.message ?: e.toString())
+    }
 }

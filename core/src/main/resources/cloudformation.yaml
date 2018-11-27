@@ -62,7 +62,7 @@ Resources:
       Environment:
         Variables:
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
-          SERVERLESS_CHECK_TOPIC: !Ref MonitoringServerlessCheckDistributor
+          SERVERLESS_CHECK_QUEUE: !Ref MonitoringServerlessCheckQueue
       Tags:
         - Key: App
           Value: Monitoring
@@ -120,6 +120,27 @@ Resources:
       Timeout: 300
       # Maximum memory size, since this will run non-core code.
       MemorySize: 3008
+      Tags:
+        - Key: App
+          Value: Monitoring
+
+  MonitoringServerlessCheckProcessor:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Run serverless checks.
+      Runtime: java8
+      Handler: '${serverlessCheckProcessor}'
+      Code:
+        S3Bucket: '${codeS3Bucket}'
+        S3Key: '${codeS3Key}'
+      Role: !GetAtt MonitoringServerlessCheckProcessorRole.Arn
+      # Long timeout to give user some more flexibility.
+      Timeout: 300
+      # Maximum memory size, since this will run non-core code.
+      MemorySize: 3008
+      Environment:
+        Variables:
+          CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultQueue
       Tags:
         - Key: App
           Value: Monitoring
@@ -261,7 +282,15 @@ Resources:
                   - sns:Publish
                 Resource:
                   - !Ref MonitoringClientCheckDistributor
-                  - !Ref MonitoringServerlessCheckDistributor
+        - PolicyName: SQSQueues
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource:
+                  - !GetAtt MonitoringServerlessCheckQueue.Arn
 
   MonitoringCheckResultReceiverRole:
     Type: AWS::IAM::Role
@@ -378,6 +407,44 @@ Resources:
                 Resource:
                   - !GetAtt MonitoringNotificationQueue.Arn
 
+  MonitoringServerlessCheckProcessorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /monitoring/
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: ServerlessCheckQueue
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:DeleteMessage
+                  - sqs:ChangeMessageVisibility
+                  - sqs:ReceiveMessage
+                  - sqs:GetQueueAttributes
+                Resource:
+                  - !GetAtt MonitoringServerlessCheckQueue.Arn
+        - PolicyName: CheckResultQueue
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource:
+                  - !GetAtt MonitoringCheckResultQueue.Arn
+
   ##
   # Scheduled Events
   ##
@@ -436,13 +503,22 @@ Resources:
       FunctionName: !GetAtt MonitoringNotificationProcessor.Arn
       BatchSize: 1
 
+  MonitoringServerlessCheckProcessorEvents:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: true
+      EventSourceArn: !GetAtt MonitoringServerlessCheckQueue.Arn
+      FunctionName: !GetAtt MonitoringServerlessCheckProcessor.Arn
+      BatchSize: 1
+
   ##
   # SQS Queues
+  #
+  # Visibility timeouts must be >= the Lambda function that consumes from it.
   ##
   MonitoringCheckResultQueue:
     Type: AWS::SQS::Queue
     Properties:
-      # Visibility timeout must be >= the Lambda function that consumes from it.
       VisibilityTimeout: 65
       Tags:
         - Key: App
@@ -451,7 +527,14 @@ Resources:
   MonitoringNotificationQueue:
     Type: AWS::SQS::Queue
     Properties:
-      # Visibility timeout must be >= the Lambda function that consumes from it.
+      VisibilityTimeout: 305
+      Tags:
+        - Key: App
+          Value: Monitoring
+
+  MonitoringServerlessCheckQueue:
+    Type: AWS::SQS::Queue
+    Properties:
       VisibilityTimeout: 305
       Tags:
         - Key: App
@@ -464,11 +547,6 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       DisplayName: monitoring-client-check-distributor
-
-  MonitoringServerlessCheckDistributor:
-    Type: AWS::SNS::Topic
-    Properties:
-      DisplayName: monitoring-serverless-check-distributor
 
   ##
   # DynamoDB Tables

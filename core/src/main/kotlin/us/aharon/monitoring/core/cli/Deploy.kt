@@ -223,7 +223,8 @@ internal class Deploy : Runnable {
                 "clientCleanupHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientCleanup.name}",
                 "checkResultReceiver" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultReceiver.name}",
                 "checkResultProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultProcessor.name}",
-                "notificationProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::notificationProcessor.name}"
+                "notificationProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::notificationProcessor.name}",
+                "serverlessCheckProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::serverlessCheckProcessor.name}"
         )
         val renderedTemplate = StringWriter()
         templateCfn.process(templateData, renderedTemplate)
