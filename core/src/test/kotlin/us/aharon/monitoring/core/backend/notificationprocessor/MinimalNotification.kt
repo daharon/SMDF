@@ -5,7 +5,6 @@
 package us.aharon.monitoring.core.backend.notificationprocessor
 
 import cloud.localstack.LocalstackExtension
-import com.amazonaws.services.lambda.runtime.Context
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -15,12 +14,10 @@ import us.aharon.monitoring.core.api.checks
 import us.aharon.monitoring.core.api.check
 import us.aharon.monitoring.core.BaseTest
 import us.aharon.monitoring.core.backend.NotificationProcessor
-import us.aharon.monitoring.core.checks.Check
 import us.aharon.monitoring.core.common.SQSTestEvent
 import us.aharon.monitoring.core.common.TestLambdaContext
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
-import us.aharon.monitoring.core.handlers.NotificationHandler
 
 import java.time.ZonedDateTime
 
@@ -43,7 +40,7 @@ class MinimalNotification : BaseTest() {
     })
     private val singleTestEvent = SQSTestEvent(listOf(
             mapOf(
-                    "handler" to MinimalNotification.TestNotificationHandler::class.java.canonicalName,
+                    "handler" to TestNotificationHandler::class.java.canonicalName,
                     "checkResult" to CheckResultRecord(
                             timestamp = ZonedDateTime.parse("2018-08-23T11:39:44Z"),
                             group = "test",
@@ -54,16 +51,6 @@ class MinimalNotification : BaseTest() {
                     )
             )
     ))
-
-    class TestNotificationHandler : NotificationHandler() {
-        override val policies: List<String> = emptyList()
-
-        override fun run(check: Check, checkResult: CheckResultRecord, ctx: Context) {
-            println("Running notification for:")
-            println("Check:  $check")
-            println("Check Result:  $checkResult")
-        }
-    }
 
 
     @Test
