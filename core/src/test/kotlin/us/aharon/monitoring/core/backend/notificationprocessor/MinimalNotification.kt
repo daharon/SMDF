@@ -54,7 +54,6 @@ class MinimalNotification : BaseTest() {
 
 
     @Test
-    // TODO: Fix the problem with finding the nested NotificationHandler class.
     fun `Run simple notification handler`() {
         val context = TestLambdaContext("TestNotificationProcessor")
         NotificationProcessor().run(singleTestEvent, checks, context)

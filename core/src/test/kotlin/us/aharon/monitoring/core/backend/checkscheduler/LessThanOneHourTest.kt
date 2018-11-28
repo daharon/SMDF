@@ -31,7 +31,7 @@ class LessThanOneHourTest : BaseTest() {
 
     companion object {
         private const val CLIENT_CHECK_TOPIC = "CLIENT_CHECK_TOPIC"
-        private const val SERVERLESS_CHECK_QUEUE = "FAKE"
+        private const val SERVERLESS_CHECK_QUEUE = "SERVERLESS_CHECK_QUEUE"
     }
 
 

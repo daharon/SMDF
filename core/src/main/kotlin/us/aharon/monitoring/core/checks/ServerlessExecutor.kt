@@ -51,10 +51,6 @@ abstract class ServerlessExecutor {
      */
     abstract fun run(check: ServerlessCheck, ctx: Context): Result
 
-    /**
-     * Return an instance of this class from the [run] function.
-     */
-
 
     /**
      * Wrapper for the [run] function.
