@@ -7,13 +7,14 @@ package us.aharon.monitoring.core.db
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import us.aharon.monitoring.core.extensions.LoadModulesExtension
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-import us.aharon.monitoring.core.BaseTest
 
-
-class TableNameResolverTest : BaseTest() {
+@ExtendWith(LoadModulesExtension::class)
+class TableNameResolverTest {
 
     @Test
     fun `Table name resolves successfully`() {

@@ -11,7 +11,9 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.Extensions
 import org.koin.standalone.inject
+import org.koin.test.KoinTest
 import kotlin.test.assertEquals
 
 import us.aharon.monitoring.core.checks.ClientCheck
@@ -20,11 +22,17 @@ import us.aharon.monitoring.core.api.checks
 import us.aharon.monitoring.core.api.serverlessCheck
 import us.aharon.monitoring.core.backend.CheckScheduler
 import us.aharon.monitoring.core.checks.ServerlessCheck
-import us.aharon.monitoring.core.BaseTest
+import us.aharon.monitoring.core.extensions.ClientCheckTopicExtension
+import us.aharon.monitoring.core.extensions.LoadModulesExtension
+import us.aharon.monitoring.core.extensions.ServerlessCheckQueueExtension
 
 
-@ExtendWith(LocalstackExtension::class)
-class LessThanOneHourTest : BaseTest() {
+@Extensions(
+    ExtendWith(LocalstackExtension::class),
+    ExtendWith(LoadModulesExtension::class),
+    ExtendWith(ClientCheckTopicExtension::class),
+    ExtendWith(ServerlessCheckQueueExtension::class))
+class LessThanOneHourTest : KoinTest {
 
     private val sqs: AmazonSQS by inject()
     private val sns: AmazonSNS by inject()
@@ -37,9 +45,6 @@ class LessThanOneHourTest : BaseTest() {
 
     @Test
     fun `Client Check - Interval less than 1 hour`() {
-        sns.createTopic(CLIENT_CHECK_TOPIC)
-        sqs.createQueue(SERVERLESS_CHECK_QUEUE)
-
         // Create application check.
         val checkName = "Interval < 1 hour"
         val minute = 5
@@ -64,9 +69,6 @@ class LessThanOneHourTest : BaseTest() {
 
     @Test
     fun `Serverless Check - Interval less than 1 hour`() {
-        sns.createTopic(CLIENT_CHECK_TOPIC)
-        sqs.createQueue(SERVERLESS_CHECK_QUEUE)
-
         // Create application check.
         val checkName = "Interval < 1 hour"
         val minute = 5

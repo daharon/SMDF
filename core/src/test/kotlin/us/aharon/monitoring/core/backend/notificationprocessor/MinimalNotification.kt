@@ -8,22 +8,26 @@ import cloud.localstack.LocalstackExtension
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.Extensions
 import org.koin.standalone.inject
+import org.koin.test.KoinTest
 
 import us.aharon.monitoring.core.api.checks
 import us.aharon.monitoring.core.api.check
-import us.aharon.monitoring.core.BaseTest
 import us.aharon.monitoring.core.backend.NotificationProcessor
 import us.aharon.monitoring.core.common.SQSTestEvent
 import us.aharon.monitoring.core.common.TestLambdaContext
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
+import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
 import java.time.ZonedDateTime
 
 
-@ExtendWith(LocalstackExtension::class)
-class MinimalNotification : BaseTest() {
+@Extensions(
+    ExtendWith(LocalstackExtension::class),
+    ExtendWith(LoadModulesExtension::class))
+class MinimalNotification : KoinTest {
 
     private val json: ObjectMapper by inject()
     private val checks = listOf(checks("test") {

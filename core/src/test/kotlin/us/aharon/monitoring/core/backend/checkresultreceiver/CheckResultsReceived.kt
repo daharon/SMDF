@@ -5,30 +5,32 @@
 package us.aharon.monitoring.core.backend.checkresultreceiver
 
 import cloud.localstack.LocalstackExtension
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.Extensions
 import org.koin.standalone.inject
+import org.koin.test.KoinTest
 
-import us.aharon.monitoring.core.BaseTest
 import us.aharon.monitoring.core.backend.CheckResultReceiver
 import us.aharon.monitoring.core.common.SQSTestEvent
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
+import us.aharon.monitoring.core.extensions.CheckResultTableExtension
+import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 
 
-@ExtendWith(LocalstackExtension::class)
-class CheckResultsReceived : BaseTest() {
+@Extensions(
+    ExtendWith(LocalstackExtension::class),
+    ExtendWith(LoadModulesExtension::class),
+    ExtendWith(CheckResultTableExtension::class))
+class CheckResultsReceived : KoinTest {
 
     private val db: DynamoDBMapper by inject()
     private val singleTestEvent = SQSTestEvent(listOf(
@@ -76,21 +78,6 @@ class CheckResultsReceived : BaseTest() {
             )
     ))
 
-
-    @BeforeEach
-    fun createDynamoDBTable() {
-        val client: AmazonDynamoDB by inject()
-        val createTableRequest = db.generateCreateTableRequest(CheckResultRecord::class.java)
-                .withProvisionedThroughput(ProvisionedThroughput(1, 1))
-        client.createTable(createTableRequest)
-    }
-
-    @AfterEach
-    fun deleteDynamoDBTable() {
-        val client: AmazonDynamoDB by inject()
-        val deleteTableRequest = db.generateDeleteTableRequest(CheckResultRecord::class.java)
-        client.deleteTable(deleteTableRequest)
-    }
 
     @Test
     fun `Receive a single check result`() {

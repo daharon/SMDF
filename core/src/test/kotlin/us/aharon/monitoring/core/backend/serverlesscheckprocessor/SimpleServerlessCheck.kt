@@ -8,27 +8,30 @@ import cloud.localstack.LocalstackExtension
 import com.amazonaws.services.sqs.AmazonSQS
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.Extensions
 import org.koin.standalone.inject
+import org.koin.test.KoinTest
 
-import us.aharon.monitoring.core.BaseTest
 import us.aharon.monitoring.core.api.checks
 import us.aharon.monitoring.core.api.serverlessCheck
 import us.aharon.monitoring.core.backend.ServerlessCheckProcessor
 import us.aharon.monitoring.core.common.SQSTestEvent
 import us.aharon.monitoring.core.common.TestLambdaContext
+import us.aharon.monitoring.core.extensions.CheckResultsSqsQueueExtension
+import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
 
-@ExtendWith(LocalstackExtension::class)
-class SimpleServerlessCheck : BaseTest() {
+@Extensions(
+    ExtendWith(LocalstackExtension::class),
+    ExtendWith(LoadModulesExtension::class),
+    ExtendWith(CheckResultsSqsQueueExtension::class))
+class SimpleServerlessCheck : KoinTest {
 
     private val sqs: AmazonSQS by inject()
 
 
     @Test
     fun `Serverless check returns OK`() {
-        // Create the result queue.
-        sqs.createQueue("CHECK_RESULTS_QUEUE")
-
         // Test data.
         val checkEvent = SQSTestEvent(listOf(
                 mapOf(
@@ -52,9 +55,6 @@ class SimpleServerlessCheck : BaseTest() {
 
     @Test
     fun `Serverless check throws an exception`() {
-        // Create the result queue.
-        sqs.createQueue("CHECK_RESULTS_QUEUE")
-
         // Test data.
         val checkEvent = SQSTestEvent(listOf(
                 mapOf(
