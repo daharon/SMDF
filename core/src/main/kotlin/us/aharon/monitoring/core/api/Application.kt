@@ -21,6 +21,9 @@ import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.cli.Base
 import us.aharon.monitoring.core.di.modules
 import us.aharon.monitoring.core.filters.Filter
+import us.aharon.monitoring.core.http.ClientRegistrationHandler
+import us.aharon.monitoring.core.http.ClientRegistrationRequest
+import us.aharon.monitoring.core.http.ClientRegistrationResponse
 import us.aharon.monitoring.core.mutators.Mutator
 
 
@@ -42,6 +45,7 @@ abstract class Application : KoinComponent {
 
     protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
 
+    private val _clientRegistration by lazy { ClientRegistrationHandler() }
     private val _checkScheduler by lazy { CheckScheduler() }
     private val _clientCleanup by lazy { ClientCleanup() }
     private val _checkResultReceiver by lazy { CheckResultReceiver() }
@@ -67,6 +71,21 @@ abstract class Application : KoinComponent {
      */
     fun run(args: Array<out String>) {
         CommandLine.run(Base(this), *args)
+    }
+
+    /**
+     * Handler that registers a client for monitoring.
+     *
+     * - Verify that the client name is unique.
+     * - Create SQS queue for the client subscriber with a filter based on the client's provided tags.
+     * - Subscribe the SQS queue to the CLIENT_CHECK_TOPIC.
+     * - If the client already exists but either the queue or the subscription is missing, then
+     *   re-create the queue and subscription.  The [us.aharon.monitoring.core.backend.ClientCleanup] handler will
+     *   deal with any cleanup that is necessary.
+     */
+    fun clientRegistration(event: ClientRegistrationRequest, context: Context): ClientRegistrationResponse {
+        log.info("Received event:  $event")
+        return this._clientRegistration.run(event)
     }
 
     /**

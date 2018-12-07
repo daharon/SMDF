@@ -7,16 +7,14 @@ package us.aharon.monitoring.core.http
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.NotFoundException
 import com.amazonaws.services.sns.model.SubscribeRequest
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.model.*
-import com.fasterxml.jackson.databind.JsonMappingException
-import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.databind.ObjectMapper
+import mu.KLogger
+import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
 import us.aharon.monitoring.core.db.ClientRecord
@@ -28,9 +26,11 @@ import java.util.UUID
 /**
  * API Gateway handler that registers a client for monitoring.
  */
-class ClientRegistrationHandler : BaseRequestHandler() {
+class ClientRegistrationHandler : KoinComponent {
 
     private val env: Env by inject()
+    private val log: KLogger by inject()
+    private val json: ObjectMapper by inject()
     private val db: DynamoDBMapper by inject()
     private val sqs: AmazonSQS by inject()
     private val sns: AmazonSNS by inject()
@@ -62,33 +62,25 @@ class ClientRegistrationHandler : BaseRequestHandler() {
      * - If the client already exists but either the queue or the subscription is missing, then
      *   re-create the queue and subscription.  The [us.aharon.monitoring.core.backend.ClientCleanup] handler will
      *   deal with any cleanup that is necessary.
-     *
-     * @return Client SQS queue for receiving scheduled checks.  Success or failure is returned based on response code.
      */
-    override fun handleRequest(request: APIGatewayProxyRequestEvent, context: Context): APIGatewayProxyResponseEvent {
-        log.info("Request Event:  $request")
-        val data: ClientRegistrationRequest = try {
-            json.readValue(request.body)
-        } catch (e: JsonMappingException) {
-            return APIGatewayProxyResponseEvent()
-                    .withStatusCode(400)
-                    .withBody("{\"errorMessage\": \"${e.message}\"}")
+    fun run(event: ClientRegistrationRequest): ClientRegistrationResponse {
+        log.info("Client Name:  ${event.name}")
+        log.info("Client Tags:  ${event.tags}")
+        if (event.name.isNullOrEmpty() || event.tags == null) {
+            throw Exception("Invalid values in registration request:  $event")
         }
-        log.info("Client Name:  ${data.name}")
-        log.info("Client Tags:  ${data.tags}")
 
         // Check to see if the client already exists in the database.
-        val existingClient: ClientRecord? = getExistingClient(data.name)
+        val existingClient: ClientRecord? = getExistingClient(event.name!!)
 
-        val response: APIGatewayProxyResponseEvent = when (existingClient) {
+        return when (existingClient) {
             is ClientRecord -> {
                 // Existing client.
                 log.info("Client already registered:  $existingClient")
-                val responseBody: String = if (!queueExists(existingClient.queueUrl) ||
-                        !subscriptionExists(existingClient.subscriptionArn)) {
+                if (!queueExists(existingClient.queueUrl) || !subscriptionExists(existingClient.subscriptionArn)) {
                     log.error("Must create new queue and/or subscription!")
                     val qns = createQueueAndSubscription(existingClient.name, existingClient.tags)
-                    // Update and save client to database.
+                    // Update client in database.
                     val clientRecord = ClientRecord(
                             name = existingClient.name,
                             tags = existingClient.tags,
@@ -97,47 +89,34 @@ class ClientRegistrationHandler : BaseRequestHandler() {
                             subscriptionArn = qns.subscriptionArn)
                     db.save(clientRecord)
                     log.info("Saved client to database:  $clientRecord")
-                    val clientRegRes = ClientRegistrationResponse(
+                    ClientRegistrationResponse(
                             commandQueue = qns.queueUrl,
                             resultQueue = SQS_CLIENT_RESULTS_QUEUE)
-                    json.writeValueAsString(clientRegRes)
                 } else {
-                    val clientRegRes = ClientRegistrationResponse(
+                    ClientRegistrationResponse(
                             commandQueue = existingClient.queueUrl!!,
                             resultQueue = SQS_CLIENT_RESULTS_QUEUE)
-                    json.writeValueAsString(clientRegRes)
                 }
-
-                APIGatewayProxyResponseEvent()
-                        .withStatusCode(200)
-                        .withBody(responseBody)
             }
             else -> {
                 // New client.
                 log.info("New client.")
-                val qns = createQueueAndSubscription(data.name, data.tags)
+                val qns = createQueueAndSubscription(event.name, event.tags)
                 // Write client to database.
                 val clientRecord = ClientRecord(
-                        name = data.name,
-                        tags = data.tags,
+                        name = event.name,
+                        tags = event.tags,
                         queueArn = qns.queueArn,
                         queueUrl = qns.queueUrl,
                         subscriptionArn = qns.subscriptionArn)
                 db.save(clientRecord)
                 log.info("Saved client to database:  $clientRecord")
 
-                // Response
-                val clientRegRes = ClientRegistrationResponse(
+                ClientRegistrationResponse(
                         commandQueue = qns.queueUrl,
                         resultQueue = SQS_CLIENT_RESULTS_QUEUE)
-                val responseBody = json.writeValueAsString(clientRegRes)
-                APIGatewayProxyResponseEvent()
-                        .withStatusCode(200)
-                        .withBody(responseBody)
             }
         }
-
-        return response
     }
 
     /**

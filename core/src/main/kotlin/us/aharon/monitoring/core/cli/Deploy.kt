@@ -37,6 +37,7 @@ internal class Deploy : Runnable {
     /**
      * Command-line parameters.
      */
+    // TODO:  Add `environment` parameter and use in the CloudFormation template.
     @Option(names = ["-r", "--region"],
             description = ["AWS region"],
             required = true,
@@ -217,8 +218,7 @@ internal class Deploy : Runnable {
                 "codeS3Bucket" to s3Dest,
                 "codeS3Key" to getJarFilename(parent.app::class),
                 // Functions
-                "clientRegistrationHandler" to
-                        "${ClientRegistrationHandler::class.java.canonicalName}::${ClientRegistrationHandler::handleRequest.name}",
+                "clientRegistrationHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientRegistration.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",
                 "clientCleanupHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientCleanup.name}",
                 "checkResultReceiver" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultReceiver.name}",

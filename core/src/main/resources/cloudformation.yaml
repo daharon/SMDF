@@ -446,6 +446,17 @@ Resources:
                   - !GetAtt MonitoringCheckResultQueue.Arn
 
   ##
+  # Parameter Store
+  ##
+  MonitoringClientRegistrationParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Client registration function ARN.
+      Name: /env/monitoring/registration
+      Type: String
+      Value: !GetAtt MonitoringClientRegistration.Arn
+
+  ##
   # Scheduled Events
   ##
   MonitoringCheckSchedulerEventRule:
