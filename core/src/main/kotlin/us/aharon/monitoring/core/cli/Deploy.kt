@@ -13,7 +13,6 @@ import picocli.CommandLine.ParentCommand
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 
-import us.aharon.monitoring.core.http.ClientRegistrationHandler
 import us.aharon.monitoring.core.util.getJarAbsolutePath
 import us.aharon.monitoring.core.util.getJarFilename
 

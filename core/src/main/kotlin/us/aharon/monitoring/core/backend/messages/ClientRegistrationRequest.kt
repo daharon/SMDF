@@ -2,7 +2,7 @@
  * Copyright (c) 2018 Daniel Aharon
  */
 
-package us.aharon.monitoring.core.http
+package us.aharon.monitoring.core.backend.messages
 
 
 data class ClientRegistrationRequest(

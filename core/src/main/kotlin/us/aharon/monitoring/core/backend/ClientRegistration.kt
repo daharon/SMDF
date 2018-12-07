@@ -2,7 +2,7 @@
  * Copyright (c) 2018 Daniel Aharon
  */
 
-package us.aharon.monitoring.core.http
+package us.aharon.monitoring.core.backend
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
@@ -14,10 +14,13 @@ import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.model.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KLogger
+import org.koin.core.parameter.parametersOf
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
 import us.aharon.monitoring.core.db.ClientRecord
+import us.aharon.monitoring.core.backend.messages.ClientRegistrationRequest
+import us.aharon.monitoring.core.backend.messages.ClientRegistrationResponse
 import us.aharon.monitoring.core.util.Env
 
 import java.util.UUID
@@ -26,10 +29,10 @@ import java.util.UUID
 /**
  * API Gateway handler that registers a client for monitoring.
  */
-class ClientRegistrationHandler : KoinComponent {
+class ClientRegistration : KoinComponent {
 
     private val env: Env by inject()
-    private val log: KLogger by inject()
+    private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
     private val json: ObjectMapper by inject()
     private val db: DynamoDBMapper by inject()
     private val sqs: AmazonSQS by inject()

@@ -21,9 +21,8 @@ import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.cli.Base
 import us.aharon.monitoring.core.di.modules
 import us.aharon.monitoring.core.filters.Filter
-import us.aharon.monitoring.core.http.ClientRegistrationHandler
-import us.aharon.monitoring.core.http.ClientRegistrationRequest
-import us.aharon.monitoring.core.http.ClientRegistrationResponse
+import us.aharon.monitoring.core.backend.messages.ClientRegistrationRequest
+import us.aharon.monitoring.core.backend.messages.ClientRegistrationResponse
 import us.aharon.monitoring.core.mutators.Mutator
 
 
@@ -45,7 +44,7 @@ abstract class Application : KoinComponent {
 
     protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
 
-    private val _clientRegistration by lazy { ClientRegistrationHandler() }
+    private val _clientRegistration by lazy { ClientRegistration() }
     private val _checkScheduler by lazy { CheckScheduler() }
     private val _clientCleanup by lazy { ClientCleanup() }
     private val _checkResultReceiver by lazy { CheckResultReceiver() }
