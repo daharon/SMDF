@@ -40,6 +40,7 @@ internal class NotificationProcessor : KoinComponent {
         log.info("Running notification handler:  ${notification.handler}")
         // Create an instance of the handler given its fully qualified name.
         val handler = Class.forName(notification.handler).newInstance() as NotificationHandler
+        // TODO: Implement AssumeRole operation to grant necessary user-defined access to the notification handler. Similar to [ServerlessExecutor].
         // Execute the handler.
         handler.execute(check, notification.checkResult!!, context)
     }

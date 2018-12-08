@@ -56,6 +56,7 @@ abstract class ServerlessExecutor {
      * Wrapper for the [run] function.
      */
     fun execute(check: ServerlessCheck, context: Context): Result = try {
+        // TODO:  Implement AssumeRole operation using the IAM Role generated to allow the policies defined in the variable above.
         this.run(check, context)
     } catch (e: Exception) {
         Critical(e.message ?: e.toString())

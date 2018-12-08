@@ -113,11 +113,16 @@
             <version>${koin.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>cloud.localstack</groupId>
             <artifactId>localstack-utils</artifactId>
             <version>0.1.15</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.mockk</groupId>
+            <artifactId>mockk</artifactId>
+            <version>1.8.13</version>
             <scope>test</scope>
         </dependency>
 

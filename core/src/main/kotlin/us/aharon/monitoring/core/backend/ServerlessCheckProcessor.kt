@@ -48,6 +48,7 @@ internal class ServerlessCheckProcessor : KoinComponent {
         log.info("Running serverless check:  ${checkMsg.executor}")
         // Create an instance of the executor given its fully qualified name.
         val serverlessExecutor = Class.forName(checkMsg.executor).newInstance() as ServerlessExecutor
+        // TODO: AssumeRole based on the policies defined in the ServerlessExecutor instance.
         // Execute the check.
         val result = serverlessExecutor.execute(check, context)
         // Send the result to the result queue.

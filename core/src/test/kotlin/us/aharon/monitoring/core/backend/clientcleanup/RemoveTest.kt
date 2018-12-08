@@ -8,7 +8,6 @@ import cloud.localstack.LocalstackExtension
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.dynamodbv2.model.StreamRecord
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.Extensions
@@ -22,8 +21,6 @@ import us.aharon.monitoring.core.extensions.ClientCheckTopicExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
 
-// TODO:  Test is broken.  Setup SNS subscription properly.
-@Disabled
 @Extensions(
     ExtendWith(LocalstackExtension::class),
     ExtendWith(LoadModulesExtension::class),
