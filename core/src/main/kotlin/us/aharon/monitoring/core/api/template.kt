@@ -9,7 +9,10 @@ import us.aharon.monitoring.core.checks.ClientCheck
 import us.aharon.monitoring.core.checks.ServerlessCheck
 
 
-fun clientCheckTemplate(defaults: ClientCheck.() -> Unit): CheckGroup.(String, ClientCheck.() -> Unit) -> Unit =
+typealias ClientCheckTemplate = CheckGroup.(name: String, block: ClientCheck.() -> Unit) -> Unit
+typealias ServerlessCheckTemplate = CheckGroup.(name: String, block: ServerlessCheck.() -> Unit) -> Unit
+
+fun clientCheckTemplate(defaults: ClientCheck.() -> Unit): ClientCheckTemplate =
         fun CheckGroup.(name: String, block: ClientCheck.() -> Unit) {
             val check = ClientCheck(name)
             check.apply(defaults)
@@ -17,7 +20,7 @@ fun clientCheckTemplate(defaults: ClientCheck.() -> Unit): CheckGroup.(String, C
             checks.add(check)
         }
 
-fun serverlessCheckTemplate(defaults: ServerlessCheck.() -> Unit): CheckGroup.(String, ServerlessCheck.() -> Unit) -> Unit =
+fun serverlessCheckTemplate(defaults: ServerlessCheck.() -> Unit): ServerlessCheckTemplate =
         fun CheckGroup.(name: String, block: ServerlessCheck.() -> Unit) {
             val check = ServerlessCheck(name)
             check.apply(defaults)
