@@ -14,19 +14,12 @@ import us.aharon.monitoring.example.checks.TEST_CLIENT_CHECKS
 
 class App : Application() {
 
+    override val filters = emptyList<Filter>()
+    override val mutators = emptyList<Mutator>()
     override val checks = listOf(
             SYSTEM_CHECKS,
             TEST_CLIENT_CHECKS
     )
-    override val filters = emptyList<Filter>()
-    override val mutators = emptyList<Mutator>()
-
-
-    companion object {
-        /**
-         * CLI entry point.
-         */
-        @JvmStatic
-        fun main(vararg args: String) = App().run(args)
-    }
 }
+
+fun main(vararg args: String) = App().run(args)
