@@ -36,6 +36,11 @@ internal class Deploy : Runnable {
     /**
      * Command-line parameters.
      */
+    @Option(names = ["--dry-run"],
+            description = ["Generate and validate the CloudFormation template without installing the application"],
+            required = false)
+    private var dryRun: Boolean = false
+
     @Option(names = ["-r", "--region"],
             paramLabel = "REGION",
             description = ["AWS region"],
@@ -46,8 +51,9 @@ internal class Deploy : Runnable {
     @Option(names = ["-d", "--s3-dest"],
             paramLabel = "DEST",
             description = ["S3 Bucket and path as upload destination. eg. <bucket>/path/"],
-            required = true)
-    private lateinit var s3Dest: String
+            required = true,
+            converter = [AWSS3PathConverter::class])
+    private lateinit var s3Dest: S3BucketAndPath
 
     @Option(names = ["-n", "--stack-name"],
             paramLabel = "NAME",
@@ -80,18 +86,20 @@ internal class Deploy : Runnable {
         // Validate CloudFormation template.
         validateCloudFormationTemplate(cfnTemplate)
 
-        // Upload JAR to S3 bucket specified in command-line parameter.
-        uploadJarFile()
+        if (!dryRun) {
+            // Upload JAR to S3 bucket specified in command-line parameter.
+            uploadJarFile()
 
-        // Upload CloudFormation template to S3 bucket.
-        val cfnTemplateS3Key = uploadCloudFormationTemplate(cfnTemplate)
-        TimeUnit.SECONDS.sleep(5)  // Wait for S3, just in case.
+            // Upload CloudFormation template to S3 bucket.
+            val cfnTemplateS3Key = uploadCloudFormationTemplate(cfnTemplate)
+            TimeUnit.SECONDS.sleep(5)  // Wait for S3, just in case.
 
-        // Create or update CloudFormation stack.  Stack name provided by command-line parameter.
-        createCloudFormationStack(cfnTemplateS3Key)
+            // Create or update CloudFormation stack.  Stack name provided by command-line parameter.
+            createCloudFormationStack(cfnTemplateS3Key)
 
-        // Poll for stack creation/update status.
-        pollCloudFormationStackStatus()
+            // Poll for stack creation/update status.
+            pollCloudFormationStackStatus()
+        }
     }
 
     /**
@@ -160,7 +168,7 @@ internal class Deploy : Runnable {
             println("The `$stackName` stack does not exist.")
             false
         }
-        val templateUrl = "https://s3.amazonaws.com/$s3Dest/$template"
+        val templateUrl = "https://s3.amazonaws.com/${s3Dest.bucket}/$template"
         println("Template URL:  $templateUrl")
         if (stackExists) {
             val updateRequest = UpdateStackRequest()
@@ -186,13 +194,13 @@ internal class Deploy : Runnable {
      * @return Template S3 path/key.
      */
     private fun uploadCloudFormationTemplate(template: String): String {
-        val templateFilename = "cfn-template-$environment-${System.currentTimeMillis()}.yaml"
-        println("Uploading $templateFilename")
+        val templateKey = "${s3Dest.path}/cfn-template-$environment-${System.currentTimeMillis()}.yaml"
+        println("Uploading $templateKey")
         val s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(region)
                 .build()
-        s3Client.putObject(s3Dest, templateFilename, template)
-        return templateFilename
+        s3Client.putObject(s3Dest.bucket, templateKey, template)
+        return templateKey
     }
 
     /**
@@ -200,12 +208,12 @@ internal class Deploy : Runnable {
      */
     private fun uploadJarFile() {
         val jarPath = getJarAbsolutePath(parent.app::class)
-        val jarName = getJarFilename(parent.app::class)
+        val jarKey = "${s3Dest.path}/${getJarFilename(parent.app::class)}"
         println("Uploading $jarPath")
         val s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(region)
                 .build()
-        s3Client.putObject(s3Dest, jarName, File(jarPath))
+        s3Client.putObject(s3Dest.bucket, jarKey, File(jarPath))
     }
 
     /**
@@ -222,8 +230,8 @@ internal class Deploy : Runnable {
         val templateData = mapOf<String, Any>(
                 "environment" to environment,
                 // Code
-                "codeS3Bucket" to s3Dest,
-                "codeS3Key" to getJarFilename(parent.app::class),
+                "codeS3Bucket" to s3Dest.bucket,
+                "codeS3Key" to "${s3Dest.path}/${getJarFilename(parent.app::class)}",
                 // Functions
                 "clientRegistrationHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientRegistration.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",
