@@ -37,13 +37,19 @@ class ClientRegistration : KoinComponent {
     private val db: DynamoDBMapper by inject()
     private val sqs: AmazonSQS by inject()
     private val sns: AmazonSNS by inject()
+
+    private val ENVIRONMENT: String by lazy { env.get("ENVIRONMENT") }
     /**
      * New client queues are subscribed to this SNS Topic.
      */
     private val SNS_CLIENT_CHECK_TOPIC_ARN: String by lazy { env.get("CLIENT_CHECK_TOPIC") }
+    /**
+     * Client must send its results to this queue.
+     */
     private val SQS_CLIENT_RESULTS_QUEUE: String by lazy { env.get("CHECK_RESULTS_QUEUE") }
 
     companion object {
+        private const val MESSAGE_RETENTION_PERIOD = 3600  // One hour
         private const val SNS_MESSAGE_ATTRIBUTE_TAGS = "tags"
     }
 
@@ -131,14 +137,15 @@ class ClientRegistration : KoinComponent {
      */
     private fun createQueueAndSubscription(name: String?, tags: List<String>?): NewQueueAndSubscription {
         // Create queue.
-        val queueName = "monitoring-${UUID.randomUUID()}"
+        val queueName = "monitoring-$ENVIRONMENT-${UUID.randomUUID()}"
         log.info("Generated queue name:  $queueName")
         val queueRequest = CreateQueueRequest(queueName)
-                .withAttributes(mapOf("MessageRetentionPeriod" to "3600"))
+                .withAttributes(mapOf("MessageRetentionPeriod" to MESSAGE_RETENTION_PERIOD.toString()))
         val queueResult = sqs.createQueue(queueRequest)
         // Assign tags to the queue.
         sqs.tagQueue(queueResult.queueUrl, mapOf(
                 "App" to "Monitoring",
+                "Env" to ENVIRONMENT,
                 "Client" to name))
         // Get queue ARN.  For some reason this is not returned in the createQueue() result.
         val queueAttrRequest = GetQueueAttributesRequest(queueResult.queueUrl)

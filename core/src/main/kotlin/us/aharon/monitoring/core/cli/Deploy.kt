@@ -36,23 +36,30 @@ internal class Deploy : Runnable {
     /**
      * Command-line parameters.
      */
-    // TODO:  Add `environment` parameter and use in the CloudFormation template.
     @Option(names = ["-r", "--region"],
+            paramLabel = "REGION",
             description = ["AWS region"],
             required = true,
             converter = [AWSRegionConverter::class])
     private lateinit var region: Regions
 
     @Option(names = ["-d", "--s3-dest"],
+            paramLabel = "DEST",
             description = ["S3 Bucket and path as upload destination. eg. <bucket>/path/"],
             required = true)
     private lateinit var s3Dest: String
 
     @Option(names = ["-n", "--stack-name"],
+            paramLabel = "NAME",
             description = ["CloudFormation Stack name"],
             required = true)
     private lateinit var stackName: String
 
+    @Option(names = ["-e", "--environment"],
+            paramLabel = "ENV",
+            description = ["A name given to the environment for this application (prd, dev, ...)"],
+            required = true)
+    private lateinit var environment: String
 
     companion object {
         /**
@@ -179,7 +186,7 @@ internal class Deploy : Runnable {
      * @return Template S3 path/key.
      */
     private fun uploadCloudFormationTemplate(template: String): String {
-        val templateFilename = "cfn-template-${System.currentTimeMillis()}.yaml"
+        val templateFilename = "cfn-template-$environment-${System.currentTimeMillis()}.yaml"
         println("Uploading $templateFilename")
         val s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(region)
@@ -213,6 +220,7 @@ internal class Deploy : Runnable {
         }
         val templateCfn = templateConfig.getTemplate(CLOUDFORMATION_TEMPLATE)
         val templateData = mapOf<String, Any>(
+                "environment" to environment,
                 // Code
                 "codeS3Bucket" to s3Dest,
                 "codeS3Key" to getJarFilename(parent.app::class),

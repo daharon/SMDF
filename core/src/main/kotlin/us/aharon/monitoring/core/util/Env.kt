@@ -8,6 +8,7 @@ import javax.naming.NameNotFoundException
 
 
 private val ENVIRONMENT_VARIABLES = mapOf<String, String?>(
+        "ENVIRONMENT" to System.getenv("ENVIRONMENT"),
         "CLIENT_CHECK_TOPIC" to System.getenv("CLIENT_CHECK_TOPIC"),
         "CHECK_RESULTS_QUEUE" to System.getenv("CHECK_RESULTS_QUEUE"),
         "SERVERLESS_CHECK_QUEUE" to System.getenv("SERVERLESS_CHECK_QUEUE"),

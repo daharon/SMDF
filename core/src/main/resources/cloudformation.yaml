@@ -21,12 +21,15 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          ENVIRONMENT: '${environment}'
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
           CLIENT_DB_TABLE: !Ref MonitoringClientsTable
           CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultQueue
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringClientCleanup:
     Type: AWS::Lambda::Function
@@ -42,10 +45,13 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          ENVIRONMENT: '${environment}'
           CLIENT_DB_TABLE: !Ref MonitoringClientsTable
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringCheckScheduler:
     Type: AWS::Lambda::Function
@@ -61,11 +67,14 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          ENVIRONMENT: '${environment}'
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
           SERVERLESS_CHECK_QUEUE: !Ref MonitoringServerlessCheckQueue
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringCheckResultReceiver:
     Type: AWS::Lambda::Function
@@ -81,10 +90,13 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          ENVIRONMENT: '${environment}'
           CHECK_RESULTS_DB_TABLE: !Ref MonitoringCheckResultsTable
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringCheckResultProcessor:
     Type: AWS::Lambda::Function
@@ -100,11 +112,14 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          ENVIRONMENT: '${environment}'
           CHECK_RESULTS_DB_TABLE: !Ref MonitoringCheckResultsTable
           NOTIFICATION_QUEUE: !Ref MonitoringNotificationQueue
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringNotificationProcessor:
     Type: AWS::Lambda::Function
@@ -120,9 +135,14 @@ Resources:
       Timeout: 300
       # Maximum memory size, since this will run non-core code.
       MemorySize: 3008
+      Environment:
+        Variables:
+          ENVIRONMENT: '${environment}'
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringServerlessCheckProcessor:
     Type: AWS::Lambda::Function
@@ -140,10 +160,13 @@ Resources:
       MemorySize: 3008
       Environment:
         Variables:
+          ENVIRONMENT: '${environment}'
           CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultQueue
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   ##
   # IAM Roles
@@ -151,7 +174,7 @@ Resources:
   MonitoringClientRegistrationRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /monitoring/
+      Path: '/monitoring/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -208,7 +231,7 @@ Resources:
   MonitoringClientCleanupRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /monitoring/
+      Path: '/monitoring/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -260,7 +283,7 @@ Resources:
   MonitoringCheckSchedulerRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /monitoring/
+      Path: '/monitoring/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -295,7 +318,7 @@ Resources:
   MonitoringCheckResultReceiverRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /monitoring/
+      Path: '/monitoring/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -334,7 +357,7 @@ Resources:
   MonitoringCheckResultProcessorRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /monitoring/
+      Path: '/monitoring/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -381,7 +404,7 @@ Resources:
   MonitoringNotificationProcessorRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /monitoring/
+      Path: '/monitoring/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -410,7 +433,7 @@ Resources:
   MonitoringServerlessCheckProcessorRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /monitoring/
+      Path: '/monitoring/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -452,7 +475,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: Client registration function ARN.
-      Name: /env/monitoring/registration
+      Name: '/${environment}/monitoring/registration'
       Type: String
       Value: !GetAtt MonitoringClientRegistration.Arn
 
@@ -534,6 +557,8 @@ Resources:
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringNotificationQueue:
     Type: AWS::SQS::Queue
@@ -542,6 +567,8 @@ Resources:
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringServerlessCheckQueue:
     Type: AWS::SQS::Queue
@@ -550,6 +577,8 @@ Resources:
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   ##
   # SNS Topics
@@ -557,7 +586,7 @@ Resources:
   MonitoringClientCheckDistributor:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: monitoring-client-check-distributor
+      DisplayName: 'monitoring-${environment}-client-check-distributor'
 
   ##
   # DynamoDB Tables
@@ -577,6 +606,8 @@ Resources:
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
 
   MonitoringCheckResultsTable:
     Type: AWS::DynamoDB::Table
@@ -597,3 +628,5 @@ Resources:
       Tags:
         - Key: App
           Value: Monitoring
+        - Key: Env
+          Value: '${environment}'
