@@ -17,6 +17,7 @@ import us.aharon.monitoring.core.common.DynamodbTestEvent
 import us.aharon.monitoring.core.common.FAKE_SNS_SUBSCRIPTION_ARN
 import us.aharon.monitoring.core.common.FAKE_SQS_QUEUE_ARN
 import us.aharon.monitoring.core.common.FAKE_SQS_QUEUE_URL
+import us.aharon.monitoring.core.db.ClientRecord
 import us.aharon.monitoring.core.extensions.ClientCheckTopicExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
@@ -30,6 +31,9 @@ class RemoveTest {
     private val testEvent = DynamodbTestEvent(mapOf(
             StreamRecord().withOldImage(
                     mapOf<String, AttributeValue>(
+                            "pk" to AttributeValue(ClientRecord.generateId("fake-name")),
+                            "sk" to AttributeValue("true"),
+                            "data" to AttributeValue("2018-08-23T11:41:44Z"),
                             "name" to AttributeValue("fake-name"),
                             "tags" to AttributeValue().withL(AttributeValue("fake-tag")),
                             "subscriptionArn" to AttributeValue(FAKE_SNS_SUBSCRIPTION_ARN),
@@ -42,6 +46,6 @@ class RemoveTest {
 
     @Test
     fun `DynamoDB event REMOVE`() {
-        ClientCleanup().run(testEvent)
+        ClientCleanup().run(testEvent.records.first())
     }
 }

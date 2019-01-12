@@ -20,6 +20,7 @@ import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder
 import com.amazonaws.services.sqs.model.TagQueueResult
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.mockk.every
@@ -31,6 +32,7 @@ import org.koin.dsl.module.module
 import us.aharon.monitoring.core.common.FAKE_SNS_SUBSCRIPTION_ARN
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.ClientRecord
+import us.aharon.monitoring.core.db.Dao
 import us.aharon.monitoring.core.util.Env
 
 
@@ -52,6 +54,7 @@ internal val modules = module {
         ObjectMapper()
                 .registerModule(JavaTimeModule())
                 .registerKotlinModule()
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     }
     single<AmazonSNS> { mockedAmazonSNS() }
     single<AmazonSQS> { mockedAmazonSQS() }
@@ -78,6 +81,7 @@ internal val modules = module {
                         AwsClientBuilder.EndpointConfiguration("http://localhost:$LOCALSTACK_DYNAMODB_PORT", "us-east-1"))
                 .build()
     }
+    single<Dao> { Dao() }
 }
 
 /**

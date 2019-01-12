@@ -23,7 +23,7 @@ Resources:
         Variables:
           ENVIRONMENT: '${environment}'
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
-          CLIENT_DB_TABLE: !Ref MonitoringClientsTable
+          DB_TABLE: !Ref MonitoringTable
           CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultQueue
       Tags:
         - Key: App
@@ -31,22 +31,23 @@ Resources:
         - Key: Env
           Value: '${environment}'
 
-  MonitoringClientCleanup:
+  MonitoringDatabaseStreamProcessor:
     Type: AWS::Lambda::Function
     Properties:
-      Description: Cleanup resources of modified or deleted clients.
+      Description: Process events from the database stream.
       Runtime: java8
-      Handler: '${clientCleanupHandler}'
+      Handler: '${databaseStreamProcessor}'
       Code:
         S3Bucket: '${codeS3Bucket}'
         S3Key: '${codeS3Key}'
-      Role: !GetAtt MonitoringClientCleanupRole.Arn
+      Role: !GetAtt MonitoringDatabaseStreamProcessorRole.Arn
       Timeout: 60
       MemorySize: 512
       Environment:
         Variables:
           ENVIRONMENT: '${environment}'
-          CLIENT_DB_TABLE: !Ref MonitoringClientsTable
+          DB_TABLE: !Ref MonitoringTable
+          NOTIFICATION_QUEUE: !Ref MonitoringNotificationQueue
       Tags:
         - Key: App
           Value: Monitoring
@@ -91,30 +92,7 @@ Resources:
       Environment:
         Variables:
           ENVIRONMENT: '${environment}'
-          CHECK_RESULTS_DB_TABLE: !Ref MonitoringCheckResultsTable
-      Tags:
-        - Key: App
-          Value: Monitoring
-        - Key: Env
-          Value: '${environment}'
-
-  MonitoringCheckResultProcessor:
-    Type: AWS::Lambda::Function
-    Properties:
-      Description: Process results returned from checks.
-      Runtime: java8
-      Handler: '${checkResultProcessor}'
-      Code:
-        S3Bucket: '${codeS3Bucket}'
-        S3Key: '${codeS3Key}'
-      Role: !GetAtt MonitoringCheckResultProcessorRole.Arn
-      Timeout: 60
-      MemorySize: 512
-      Environment:
-        Variables:
-          ENVIRONMENT: '${environment}'
-          CHECK_RESULTS_DB_TABLE: !Ref MonitoringCheckResultsTable
-          NOTIFICATION_QUEUE: !Ref MonitoringNotificationQueue
+          DB_TABLE: !Ref MonitoringTable
       Tags:
         - Key: App
           Value: Monitoring
@@ -200,7 +178,7 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                 Resource:
-                  - !GetAtt MonitoringClientsTable.Arn
+                  - !GetAtt MonitoringTable.Arn
         - PolicyName: SQSClientQueues
           PolicyDocument:
             Version: 2012-10-17
@@ -228,7 +206,7 @@ Resources:
                 Resource:
                   - !Ref MonitoringClientCheckDistributor
 
-  MonitoringClientCleanupRole:
+  MonitoringDatabaseStreamProcessorRole:
     Type: AWS::IAM::Role
     Properties:
       Path: '/monitoring/${environment}/'
@@ -244,7 +222,7 @@ Resources:
             Action:
               - sts:AssumeRole
       Policies:
-        - PolicyName: DynamoDBClientsTableStream
+        - PolicyName: DynamoDBTableStream
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -254,8 +232,18 @@ Resources:
                   - dynamodb:GetRecords
                   - dynamodb:GetShardIterator
                   - dynamodb:ListStreams
+                  - dynamodb:Query
                 Resource:
-                  - !GetAtt MonitoringClientsTable.StreamArn
+                  - !GetAtt MonitoringTable.StreamArn
+        - PolicyName: DynamoDBTable
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt MonitoringTable.Arn
         - PolicyName: SQSClientQueues
           PolicyDocument:
             Version: 2012-10-17
@@ -279,6 +267,15 @@ Resources:
                   - sns:Unsubscribe
                 Resource:
                   - !Ref MonitoringClientCheckDistributor
+        - PolicyName: NotificationQueue
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource:
+                  - !GetAtt MonitoringNotificationQueue.Arn
 
   MonitoringCheckSchedulerRole:
     Type: AWS::IAM::Role
@@ -352,54 +349,7 @@ Resources:
                   - dynamodb:BatchWriteItem
                   - dynamodb:PutItem
                 Resource:
-                  - !GetAtt MonitoringCheckResultsTable.Arn
-
-  MonitoringCheckResultProcessorRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Path: '/monitoring/${environment}/'
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Policies:
-        - PolicyName: DynamoDBCheckResultsTableStream
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:DescribeStream
-                  - dynamodb:GetRecords
-                  - dynamodb:GetShardIterator
-                  - dynamodb:ListStreams
-                Resource:
-                  - !GetAtt MonitoringCheckResultsTable.StreamArn
-        - PolicyName: DynamoDBCheckResultsTable
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:Query
-                Resource:
-                  - !GetAtt MonitoringCheckResultsTable.Arn
-        - PolicyName: NotificationQueue
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - sqs:SendMessage
-                Resource:
-                  - !GetAtt MonitoringNotificationQueue.Arn
+                  - !GetAtt MonitoringTable.Arn
 
   MonitoringNotificationProcessorRole:
     Type: AWS::IAM::Role
@@ -503,12 +453,12 @@ Resources:
   ###
   # Event Source Mappings
   ###
-  MonitoringClientsTableEvents:
+  MonitoringTableEvents:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       Enabled: true
-      EventSourceArn: !GetAtt MonitoringClientsTable.StreamArn
-      FunctionName: !GetAtt MonitoringClientCleanup.Arn
+      EventSourceArn: !GetAtt MonitoringTable.StreamArn
+      FunctionName: !GetAtt MonitoringDatabaseStreamProcessor.Arn
       StartingPosition: LATEST
       BatchSize: 10
 
@@ -518,15 +468,6 @@ Resources:
       Enabled: true
       EventSourceArn: !GetAtt MonitoringCheckResultQueue.Arn
       FunctionName: !GetAtt MonitoringCheckResultReceiver.Arn
-      BatchSize: 10
-
-  MonitoringCheckResultProcessorEvents:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      Enabled: true
-      EventSourceArn: !GetAtt MonitoringCheckResultsTable.StreamArn
-      FunctionName: !GetAtt MonitoringCheckResultProcessor.Arn
-      StartingPosition: LATEST
       BatchSize: 10
 
   MonitoringNotificationProcessorEvents:
@@ -591,40 +532,22 @@ Resources:
   ##
   # DynamoDB Tables
   ##
-  MonitoringClientsTable:
+  MonitoringTable:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: name
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
           AttributeType: S
       KeySchema:
-        - AttributeName: name
+        - AttributeName: pk
           KeyType: HASH
-      StreamSpecification:
-        StreamViewType: NEW_AND_OLD_IMAGES
-      Tags:
-        - Key: App
-          Value: Monitoring
-        - Key: Env
-          Value: '${environment}'
-
-  MonitoringCheckResultsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: S
-        - AttributeName: timestamp
-          AttributeType: S
-      KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-        - AttributeName: timestamp
+        - AttributeName: sk
           KeyType: RANGE
       StreamSpecification:
-        StreamViewType: NEW_IMAGE
+        StreamViewType: NEW_AND_OLD_IMAGES
       Tags:
         - Key: App
           Value: Monitoring

@@ -24,6 +24,7 @@ import us.aharon.monitoring.core.checks.ServerlessCheck
 import us.aharon.monitoring.core.util.Env
 import us.aharon.monitoring.core.util.joinToSNSMessageAttributeStringValue
 
+import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 
@@ -61,9 +62,9 @@ internal class CheckScheduler : KoinComponent {
             }.mapNotNull<Check, CheckMessage> {
                 when (it) {
                     is ClientCheck -> ClientCheckMessage(
-                            checkGroup.name, it.name, it.command, it.timeout, it.subscribers)
+                            ZonedDateTime.now(), checkGroup.name, it.name, it.command, it.timeout, it.subscribers)
                     is ServerlessCheck -> ServerlessCheckMessage(
-                            checkGroup.name, it.name, it.executor.java.canonicalName, it.timeout)
+                            ZonedDateTime.now(), checkGroup.name, it.name, it.executor.java.canonicalName, it.timeout)
                     else -> {
                         log.error("Unknown check type:  ${it::class.qualifiedName}")
                         null

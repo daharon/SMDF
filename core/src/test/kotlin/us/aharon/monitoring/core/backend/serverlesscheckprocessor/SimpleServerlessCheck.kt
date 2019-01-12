@@ -35,6 +35,7 @@ class SimpleServerlessCheck : KoinTest {
         // Test data.
         val checkEvent = SQSTestEvent(listOf(
                 mapOf(
+                        "scheduledAt" to "2018-08-23T11:39:44Z",
                         "group" to "test",
                         "name" to "test-check",
                         "executor" to OkExecutor::class.java.canonicalName,
@@ -58,6 +59,7 @@ class SimpleServerlessCheck : KoinTest {
         // Test data.
         val checkEvent = SQSTestEvent(listOf(
                 mapOf(
+                        "scheduledAt" to "2018-08-23T11:39:44Z",
                         "group" to "test",
                         "name" to "test-check",
                         "executor" to ExceptionExecutor::class.java.canonicalName,

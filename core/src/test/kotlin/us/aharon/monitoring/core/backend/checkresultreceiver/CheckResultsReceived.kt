@@ -35,44 +35,54 @@ class CheckResultsReceived : KoinTest {
     private val db: DynamoDBMapper by inject()
     private val singleTestEvent = SQSTestEvent(listOf(
             mapOf(
+                    "scheduledAt" to "2018-08-23T11:37:44Z",
+                    "executedAt" to "2018-08-23T11:38:00Z",
+                    "completedAt" to "2018-08-23T11:39:00Z",
                     "group" to "test",
                     "name" to "simple_check",
                     "source" to "test-client-1.example.com",
-                    "timestamp" to "2018-08-23T11:39:44Z",
                     "status" to CheckResultStatus.OK.name,
                     "output" to "OK: This check is A-OK"
             )
     ))
     private val multipleTestEvents = SQSTestEvent(listOf(
             mapOf(
+                    "scheduledAt" to "2018-08-23T11:37:44Z",
+                    "executedAt" to "2018-08-23T11:38:00Z",
+                    "completedAt" to "2018-08-23T11:39:00Z",
                     "group" to "test",
                     "name" to "ok_check",
                     "source" to "test-client-1.example.com",
-                    "timestamp" to "2018-08-23T11:39:44Z",
                     "status" to CheckResultStatus.OK.name,
                     "output" to "OK: This check is A-OK."
             ),
             mapOf(
+                    "scheduledAt" to "2018-08-23T11:37:44Z",
+                    "executedAt" to "2018-08-23T11:38:00Z",
+                    "completedAt" to "2018-08-23T11:39:00Z",
                     "group" to "test",
                     "name" to "warning_check",
                     "source" to "test-client-1.example.com",
-                    "timestamp" to "2018-08-23T11:43:00Z",
                     "status" to CheckResultStatus.WARNING.name,
                     "output" to "WARNING: We're heading for a bad time."
             ),
             mapOf(
+                    "scheduledAt" to "2018-08-23T11:37:44Z",
+                    "executedAt" to "2018-08-23T11:38:00Z",
+                    "completedAt" to "2018-08-23T11:39:00Z",
                     "group" to "test",
                     "name" to "critical_check",
                     "source" to "test-client-1.example.com",
-                    "timestamp" to "2018-08-23T11:41:00Z",
                     "status" to CheckResultStatus.CRITICAL.name,
                     "output" to "CRITICAL: This check failed."
             ),
             mapOf(
+                    "scheduledAt" to "2018-08-23T11:37:44Z",
+                    "executedAt" to "2018-08-23T11:38:00Z",
+                    "completedAt" to "2018-08-23T11:39:00Z",
                     "group" to "test",
                     "name" to "unknown_check",
                     "source" to "test-client-1.example.com",
-                    "timestamp" to "2018-08-23T11:44:00Z",
                     "status" to CheckResultStatus.UNKNOWN.name,
                     "output" to "UNKNOWN: This check did not run."
             )
@@ -86,16 +96,13 @@ class CheckResultsReceived : KoinTest {
 
         // Query the database to verify that the expected data is saved.
         val query = DynamoDBQueryExpression<CheckResultRecord>()
-                .withKeyConditionExpression("#id = :id and #timestamp = :timestamp")
+                .withKeyConditionExpression("#pk = :resultId and #sk = :completedAt")
                 .withExpressionAttributeValues(mapOf(
-                        ":id" to AttributeValue(CheckResultRecord.generateId(
+                        ":resultId" to AttributeValue(CheckResultRecord.generateResultId(
                                 "test", "simple_check", "test-client-1.example.com")),
-                        ":timestamp" to AttributeValue("2018-08-23T11:39:44Z")
+                        ":completedAt" to AttributeValue("2018-08-23T11:39:00Z")
                 ))
-                .withExpressionAttributeNames(mapOf(
-                        "#id" to "id",
-                        "#timestamp" to "timestamp"
-                ))
+                .withExpressionAttributeNames(mapOf("#pk" to "pk", "#sk" to "sk"))
         val results = db.query(CheckResultRecord::class.java, query)
 
         assertEquals(1, results.size)
@@ -103,7 +110,7 @@ class CheckResultsReceived : KoinTest {
             assertEquals("test", this.group)
             assertEquals("simple_check", this.name)
             assertEquals("test-client-1.example.com", this.source)
-            assertEquals(ZonedDateTime.parse("2018-08-23T11:39:44Z"), this.timestamp)
+            assertEquals(ZonedDateTime.parse("2018-08-23T11:39:00Z"), this.completedAt)
             assertEquals(CheckResultStatus.OK, this.status)
             assertEquals("OK: This check is A-OK", this.output)
         }

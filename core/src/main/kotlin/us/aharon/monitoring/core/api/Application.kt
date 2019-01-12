@@ -46,9 +46,8 @@ abstract class Application : KoinComponent {
 
     private val _clientRegistration by lazy { ClientRegistration() }
     private val _checkScheduler by lazy { CheckScheduler() }
-    private val _clientCleanup by lazy { ClientCleanup() }
+    private val _databaseStreamProcessor by lazy { DatabaseStreamProcessor() }
     private val _checkResultReceiver by lazy { CheckResultReceiver() }
-    private val _checkResultProcessor by lazy { CheckResultProcessor() }
     private val _notificationProcessor by lazy { NotificationProcessor() }
     private val _serverlessCheckProcessor by lazy { ServerlessCheckProcessor() }
 
@@ -113,15 +112,14 @@ abstract class Application : KoinComponent {
     }
 
     /**
-     * Process the check results as provided by the DynamoDB stream.
+     * Process the messages provided by the DynamoDB stream.
      *
-     * - Determine if forwarding to the notification handler is necessary.
-     * - Was there a state change?
-     * - Flapping detection?
+     * - Process check results.
+     * - Process client changes.
      */
-    fun checkResultProcessor(event: DynamodbEvent, context: Context) {
+    fun databaseStreamProcessor(event: DynamodbEvent, context: Context) {
         log.info("DynamoDB stream event: $event")
-        this._checkResultProcessor.run(event, checks)
+        this._databaseStreamProcessor.run(event, checks)
     }
 
     /**
@@ -132,15 +130,6 @@ abstract class Application : KoinComponent {
     fun notificationProcessor(event: SQSEvent, context: Context) {
         event.records.forEach { log.info("Message body:  ${it.body}") }
         this._notificationProcessor.run(event, checks, context)
-    }
-
-    /**
-     * Cleanup client resources (queues, SNS subscriptions) when modified or
-     * deleted in the clients DynamoDB table.
-     */
-    fun clientCleanup(event: DynamodbEvent, context: Context) {
-        log.info("DynamoDB stream event: $event")
-        this._clientCleanup.run(event)
     }
 
     /**

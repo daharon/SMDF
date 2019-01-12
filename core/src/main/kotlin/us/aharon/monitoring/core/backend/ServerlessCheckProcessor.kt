@@ -50,10 +50,13 @@ internal class ServerlessCheckProcessor : KoinComponent {
         val serverlessExecutor = Class.forName(checkMsg.executor).newInstance() as ServerlessExecutor
         // TODO: AssumeRole based on the policies defined in the ServerlessExecutor instance.
         // Execute the check.
+        val executedAt = ZonedDateTime.now()
         val result = serverlessExecutor.execute(check, context)
         // Send the result to the result queue.
         val resultMessage = json.writeValueAsString(CheckResultRecord(
-                timestamp = ZonedDateTime.now(),
+                completedAt= ZonedDateTime.now(),
+                scheduledAt = checkMsg.scheduledAt,
+                executedAt = executedAt,
                 group = checkMsg.group,
                 name = checkMsg.name,
                 source = checkMsg.executor,

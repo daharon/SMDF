@@ -19,7 +19,7 @@ class TableNameResolverTest {
     @Test
     fun `Table name resolves successfully`() {
         val dynamoDbTableRecord = ClientRecord()
-        val expected = "CLIENT_DB_TABLE"
+        val expected = "FAKE_DB_TABLE"
         val actual = TableNameResolver().getTableName(dynamoDbTableRecord::class.java, null)
         assertEquals(expected, actual)
     }

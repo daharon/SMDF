@@ -18,32 +18,60 @@ import java.time.ZonedDateTime
  */
 @DynamoDBTable(tableName = "DYNAMICALLY_DEFINED")
 data class CheckResultRecord(
+
         @DynamoDBRangeKey
         @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
         @DynamoDBTypeConverted(converter = ZonedDateTimeConverter::class)
-        var timestamp: ZonedDateTime? = null,
+        @DynamoDBNamed("sk")
+        var completedAt: ZonedDateTime? = null,
+
+        @DynamoDBAttribute
+        @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
+        @DynamoDBTypeConverted(converter = ZonedDateTimeConverter::class)
+        var scheduledAt: ZonedDateTime? = null,
+
+        @DynamoDBAttribute
+        @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
+        @DynamoDBTypeConverted(converter = ZonedDateTimeConverter::class)
+        var executedAt: ZonedDateTime? = null,
 
         @DynamoDBAttribute
         var group: String? = null,
+
         @DynamoDBAttribute
         var name: String? = null,
+
         @DynamoDBAttribute
         var source: String? = null,
+
         @DynamoDBAttribute
         @DynamoDBTypeConvertedEnum
         var status: CheckResultStatus? = null,
+
         @DynamoDBAttribute
         var output: String? = null
 ) {
     @DynamoDBHashKey
-    var id: String? = null
-            get() = generateId(this.group!!, this.name!!, this.source!!)
+    @DynamoDBNamed("pk")
+    var resultId: String? = null
+            get() = generateResultId(this.group!!, this.name!!, this.source!!)
+
+    @DynamoDBNamed("data")
+    var dataKey: String? = null
+            get() = generateDataKey(group!!, name!!, source!!)
 
 
     companion object {
-        fun generateId(group: String, name: String, source: String): String =
-                // Convert to an MD5 hash because the existing ID could end up being too long.
-                "${group}_${name}_${source}".toMd5HexString()
+        const val RESULT_PK_PREFIX: String = "RESULT"
+
+        fun generateResultId(group: String, name: String, source: String): String {
+            // Convert to an MD5 hash because the existing ID could end up being too long.
+            val hash = "${group}_${name}_${source}".toMd5HexString()
+            return "$RESULT_PK_PREFIX#$hash"
+        }
+
+        fun generateDataKey(group: String, name: String, source: String): String =
+                "$source#$group#$name"
     }
 }
 

@@ -4,9 +4,6 @@
 
 package us.aharon.monitoring.core.backend
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
-import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.NotFoundException
 import com.amazonaws.services.sns.model.SubscribeRequest
@@ -21,6 +18,7 @@ import org.koin.standalone.inject
 import us.aharon.monitoring.core.db.ClientRecord
 import us.aharon.monitoring.core.backend.messages.ClientRegistrationRequest
 import us.aharon.monitoring.core.backend.messages.ClientRegistrationResponse
+import us.aharon.monitoring.core.db.Dao
 import us.aharon.monitoring.core.util.Env
 
 import java.util.UUID
@@ -34,7 +32,7 @@ class ClientRegistration : KoinComponent {
     private val env: Env by inject()
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
     private val json: ObjectMapper by inject()
-    private val db: DynamoDBMapper by inject()
+    private val db: Dao by inject()
     private val sqs: AmazonSQS by inject()
     private val sns: AmazonSNS by inject()
 
@@ -80,7 +78,7 @@ class ClientRegistration : KoinComponent {
         }
 
         // Check to see if the client already exists in the database.
-        val existingClient: ClientRecord? = getExistingClient(event.name!!)
+        val existingClient: ClientRecord? = db.getClient(event.name!!)
 
         return when (existingClient) {
             is ClientRecord -> {
@@ -90,13 +88,11 @@ class ClientRegistration : KoinComponent {
                     log.error("Must create new queue and/or subscription!")
                     val qns = createQueueAndSubscription(existingClient.name, existingClient.tags)
                     // Update client in database.
-                    val clientRecord = ClientRecord(
-                            name = existingClient.name,
-                            tags = existingClient.tags,
+                    val clientRecord = existingClient.copy(
                             queueArn = qns.queueArn,
                             queueUrl = qns.queueUrl,
                             subscriptionArn = qns.subscriptionArn)
-                    db.save(clientRecord)
+                    db.saveClient(clientRecord)
                     log.info("Saved client to database:  $clientRecord")
                     ClientRegistrationResponse(
                             commandQueue = qns.queueUrl,
@@ -118,7 +114,7 @@ class ClientRegistration : KoinComponent {
                         queueArn = qns.queueArn,
                         queueUrl = qns.queueUrl,
                         subscriptionArn = qns.subscriptionArn)
-                db.save(clientRecord)
+                db.saveClient(clientRecord)
                 log.info("Saved client to database:  $clientRecord")
 
                 ClientRegistrationResponse(
@@ -181,23 +177,6 @@ class ClientRegistration : KoinComponent {
                 queueUrl = queueResult.queueUrl,
                 subscriptionArn = subscribeResult.subscriptionArn
         )
-    }
-
-    /**
-     * Get the client record give the request data.
-     *
-     * @param clientName The unique name of the client.
-     * @return The client details if already existing in the database, or null.
-     */
-    private fun getExistingClient(clientName: String): ClientRecord? {
-        val query = DynamoDBQueryExpression<ClientRecord>()
-                .withKeyConditionExpression("#name = :name")
-                .withExpressionAttributeNames(mapOf("#name" to "name"))
-                .withExpressionAttributeValues(mapOf(":name" to AttributeValue(clientName)))
-                .withConsistentRead(true)
-                .withLimit(1)
-        val result = db.query(ClientRecord::class.java, query)
-        return result.firstOrNull()
     }
 
     /**

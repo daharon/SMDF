@@ -4,9 +4,6 @@
 
 package us.aharon.monitoring.core.backend
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
-import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.sqs.AmazonSQS
@@ -21,7 +18,7 @@ import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.checks.getCheck
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
-import us.aharon.monitoring.core.db.ZonedDateTimeConverter
+import us.aharon.monitoring.core.db.Dao
 import us.aharon.monitoring.core.events.NotificationEvent
 import us.aharon.monitoring.core.handlers.NotificationHandler
 import us.aharon.monitoring.core.util.Env
@@ -41,7 +38,7 @@ internal class CheckResultProcessor : KoinComponent {
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
     private val env: Env by inject()
     private val json: ObjectMapper by inject()
-    private val db: DynamoDBMapper by inject()
+    private val db: Dao by inject()
     private val sqs: AmazonSQS by inject()
 
     private val NOTIFICATION_QUEUE: String by lazy { env.get("NOTIFICATION_QUEUE") }
@@ -51,47 +48,34 @@ internal class CheckResultProcessor : KoinComponent {
      * For each event, read from the database the previous event.
      * If there was a state change, send to the notification handler queue.
      */
-    fun run(event: DynamodbEvent, checks: List<CheckGroup>) = event.records.forEach {
-        when (OperationType.fromValue(it.eventName)) {
+    fun run(record: DynamodbEvent.DynamodbStreamRecord, checks: List<CheckGroup>) {
+        when (OperationType.fromValue(record.eventName)) {
             OperationType.INSERT -> {
                 log.info("Received INSERT event.")
-                val newCheckResultRecord = db.marshallIntoObject(CheckResultRecord::class.java, it.dynamodb.newImage)
-                val previousCheckResultRecord = previousRecord(newCheckResultRecord)
+                val newCheckResultRecord = db.marshallCheckResultRecord(record.dynamodb.newImage)
+                val previousCheckResultRecord = db.previousCheckResultRecord(newCheckResultRecord)
                 val handlers = checks.getCheck(newCheckResultRecord.group!!, newCheckResultRecord.name!!).handlers
                 log.info("Previous record:  $previousCheckResultRecord")
 
-                if (previousCheckResultRecord == null) {
-                    // This is the first time this check has run on the client.
-                    if (newCheckResultRecord.status != CheckResultStatus.OK) {
-                        sendToNotificationHandler(null, newCheckResultRecord, handlers)
+                when (previousCheckResultRecord) {
+                    null -> {
+                        // This is the first time this check has run on the client.
+                        if (newCheckResultRecord.status != CheckResultStatus.OK) {
+                            sendToNotificationHandler(null, newCheckResultRecord, handlers)
+                        }
                     }
-                } else {
-                    log.info("Previous status: ${previousCheckResultRecord.status}, New status: ${newCheckResultRecord.status}")
-                    if (previousCheckResultRecord.status != newCheckResultRecord.status) {
-                        sendToNotificationHandler(previousCheckResultRecord, newCheckResultRecord, handlers)
+                    else -> {
+                        log.info("Previous status: ${previousCheckResultRecord.status}, New status: ${newCheckResultRecord.status}")
+                        if (previousCheckResultRecord.status != newCheckResultRecord.status) {
+                            sendToNotificationHandler(previousCheckResultRecord, newCheckResultRecord, handlers)
+                        }
                     }
                 }
             }
             OperationType.MODIFY -> log.info("Ignoring MODIFY event.")
             OperationType.REMOVE -> log.info("Ignoring REMOVE event.")
-            else -> log.error("Unknown event name provided:  ${it.eventName}")
+            else -> log.error("Unknown event name provided:  ${record.eventName}")
         }
-    }
-
-    /**
-     * Query the database for the previous record and return its status.
-     */
-    private fun previousRecord(newRecord: CheckResultRecord): CheckResultRecord? {
-        val query = DynamoDBQueryExpression<CheckResultRecord>()
-                .withKeyConditionExpression("#id = :id AND #timestamp < :timestamp")
-                .withExpressionAttributeValues(mapOf(
-                        ":id" to AttributeValue(newRecord.id),
-                        ":timestamp" to AttributeValue(ZonedDateTimeConverter().convert(newRecord.timestamp!!))))
-                .withExpressionAttributeNames(mapOf("#id" to "id", "#timestamp" to "timestamp"))
-                .withScanIndexForward(false)
-                .withLimit(1)
-        val result = db.query(CheckResultRecord::class.java, query)
-        return result.firstOrNull()
     }
 
     /**

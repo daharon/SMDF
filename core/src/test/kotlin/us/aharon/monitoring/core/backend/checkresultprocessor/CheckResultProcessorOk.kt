@@ -50,10 +50,14 @@ class CheckResultProcessorOk : KoinTest {
     private val singleTestEvent = DynamodbTestEvent(mapOf(
             StreamRecord().withNewImage(
                     mapOf<String, AttributeValue>(
+                            "pk" to AttributeValue(CheckResultRecord.generateResultId("test", "test-check", "server-1.example.com")),
+                            "sk" to AttributeValue("2018-08-23T11:41:44Z"),  // completedAt
+                            "data" to AttributeValue(CheckResultRecord.generateDataKey("test", "test-check", "server-1.example.com")),
+                            "executedAt" to AttributeValue("2018-08-23T11:40:44Z"),
+                            "scheduledAt" to AttributeValue("2018-08-23T11:39:44Z"),
                             "group" to AttributeValue("test"),
                             "name" to AttributeValue("test-check"),
                             "source" to AttributeValue("server-1.example.com"),
-                            "timestamp" to AttributeValue("2018-08-23T11:39:44Z"),
                             "status" to AttributeValue(CheckResultStatus.OK.name),
                             "output" to AttributeValue("OK: This check is A-OK")
                     )
@@ -74,7 +78,7 @@ class CheckResultProcessorOk : KoinTest {
     @Test
     fun `Receive a single OK check result`() {
         // Run the Lambda handler.
-        CheckResultProcessor().run(singleTestEvent, testChecks)
+        CheckResultProcessor().run(singleTestEvent.records.first(), testChecks)
 
         // TODO: Verify test results.
         // db.query()

@@ -46,7 +46,9 @@ class MinimalNotification : KoinTest {
             mapOf(
                     "handler" to TestNotificationHandler::class.java.canonicalName,
                     "checkResult" to CheckResultRecord(
-                            timestamp = ZonedDateTime.parse("2018-08-23T11:39:44Z"),
+                            scheduledAt = ZonedDateTime.parse("2018-08-23T11:37:44Z"),
+                            executedAt = ZonedDateTime.parse("2018-08-23T11:38:44Z"),
+                            completedAt = ZonedDateTime.parse("2018-08-23T11:39:44Z"),
                             group = "test",
                             name = "test-check",
                             source = "test-client-1.example.com",

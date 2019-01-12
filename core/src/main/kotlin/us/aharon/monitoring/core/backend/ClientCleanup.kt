@@ -4,7 +4,6 @@
 
 package us.aharon.monitoring.core.backend
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.sns.AmazonSNS
@@ -18,7 +17,7 @@ import org.koin.core.parameter.parametersOf
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
-import us.aharon.monitoring.core.db.ClientRecord
+import us.aharon.monitoring.core.db.Dao
 
 
 /**
@@ -31,19 +30,18 @@ import us.aharon.monitoring.core.db.ClientRecord
 internal class ClientCleanup : KoinComponent {
 
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
-    private val db: DynamoDBMapper by inject()
+    private val db: Dao by inject()
     private val sqs: AmazonSQS by inject()
     private val sns: AmazonSNS by inject()
 
 
-    fun run(event: DynamodbEvent) = event.records.forEach {
-        when (OperationType.fromValue(it.eventName)) {
-            OperationType.MODIFY -> modify(it)
-            OperationType.REMOVE -> remove(it)
-            OperationType.INSERT -> log.info("Do nothing on ${it.eventName} event.")
-            else -> log.error("Unknown event name provided:  ${it.eventName}")
-        }
-    }
+    fun run(record: DynamodbEvent.DynamodbStreamRecord) =
+            when (OperationType.fromValue(record.eventName)) {
+                OperationType.MODIFY -> modify(record)
+                OperationType.REMOVE -> remove(record)
+                OperationType.INSERT -> log.info("Do nothing on ${record.eventName} event.")
+                else -> log.error("Unknown event name provided:  ${record.eventName}")
+            }
 
     /**
      * Delete SQS Queue.
@@ -71,7 +69,7 @@ internal class ClientCleanup : KoinComponent {
      * A client was deleted.
      */
     private fun remove(record: DynamodbEvent.DynamodbStreamRecord) {
-        val oldClientRecord = db.marshallIntoObject(ClientRecord::class.java, record.dynamodb.oldImage)
+        val oldClientRecord = db.marshallClientRecord(record.dynamodb.oldImage)
         log.info("Deleting resources used by client ${oldClientRecord.name}.")
         deleteSubscription(oldClientRecord.subscriptionArn)
         deleteQueue(oldClientRecord.queueArn, oldClientRecord.queueUrl)
@@ -81,8 +79,8 @@ internal class ClientCleanup : KoinComponent {
      * A client was modified.
      */
     private fun modify(record: DynamodbEvent.DynamodbStreamRecord) {
-        val oldClientRecord = db.marshallIntoObject(ClientRecord::class.java, record.dynamodb.oldImage)
-        val newClientRecord = db.marshallIntoObject(ClientRecord::class.java, record.dynamodb.newImage)
+        val oldClientRecord = db.marshallClientRecord(record.dynamodb.oldImage)
+        val newClientRecord = db.marshallClientRecord(record.dynamodb.newImage)
         log.info("Checking if any resources for client ${oldClientRecord.name} require deletion.")
 
         // Delete SNS subscription?

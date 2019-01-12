@@ -235,11 +235,10 @@ internal class Deploy : Runnable {
                 // Functions
                 "clientRegistrationHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientRegistration.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",
-                "clientCleanupHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientCleanup.name}",
                 "checkResultReceiver" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultReceiver.name}",
-                "checkResultProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultProcessor.name}",
                 "notificationProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::notificationProcessor.name}",
-                "serverlessCheckProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::serverlessCheckProcessor.name}"
+                "serverlessCheckProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::serverlessCheckProcessor.name}",
+                "databaseStreamProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::databaseStreamProcessor.name}"
         )
         val renderedTemplate = StringWriter()
         templateCfn.process(templateData, renderedTemplate)
