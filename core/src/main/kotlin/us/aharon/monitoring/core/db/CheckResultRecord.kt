@@ -57,21 +57,14 @@ data class CheckResultRecord(
             get() = generateResultId(this.group!!, this.name!!, this.source!!)
 
     @DynamoDBNamed("data")
-    var dataKey: String? = null
-            get() = generateDataKey(group!!, name!!, source!!)
+    var data: String? = DATA_FIELD
 
 
     companion object {
-        const val RESULT_PK_PREFIX: String = "RESULT"
+        internal const val DATA_FIELD: String = "CHECK_RESULT"
 
-        fun generateResultId(group: String, name: String, source: String): String {
-            // Convert to an MD5 hash because the existing ID could end up being too long.
-            val hash = "${group}_${name}_${source}".toMd5HexString()
-            return "$RESULT_PK_PREFIX#$hash"
-        }
-
-        fun generateDataKey(group: String, name: String, source: String): String =
-                "$source#$group#$name"
+        fun generateResultId(group: String, name: String, source: String): String =
+                // Convert to an MD5 hash because the existing ID could end up being too long.
+                "${group}_${name}_${source}".toMd5HexString()
     }
 }
-

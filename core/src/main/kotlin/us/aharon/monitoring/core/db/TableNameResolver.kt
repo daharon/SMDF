@@ -28,7 +28,9 @@ internal class TableNameResolver : DynamoDBMapperConfig.TableNameResolver, KoinC
     override fun getTableName(clazz: Class<*>, config: DynamoDBMapperConfig?): String = try {
         when (clazz) {
             ClientRecord::class.java -> env.get("DB_TABLE")
+            ClientHistoryRecord::class.java -> env.get("DB_TABLE")
             CheckResultRecord::class.java -> env.get("DB_TABLE")
+            NotificationRecord::class.java -> env.get("DB_TABLE")
             else -> throw DynamoDBMappingException(errorMessage(clazz))
         }
     } catch (e: NameNotFoundException) {

@@ -82,6 +82,10 @@ The `Application` class.
 - The `NotificationHandler` abstract class.
 
 ## TODO
+- [ ] Add `heartbeat` check.
+    - This runs separate from the regular check-scheduler.
+    - Send a "heartbeat" message to all clients.
+    - Record the last heartbeat in the database under the Client's metadata.
 - [ ] Refactor DynamoDB table into single table.
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html?shortFooter=true
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html

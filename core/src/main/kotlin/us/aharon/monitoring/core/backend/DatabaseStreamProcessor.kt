@@ -5,6 +5,7 @@
 package us.aharon.monitoring.core.backend
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import mu.KLogger
 import org.koin.core.parameter.parametersOf
@@ -31,24 +32,21 @@ internal class DatabaseStreamProcessor : KoinComponent {
 
     fun run(event: DynamodbEvent, checks: List<CheckGroup>) {
         event.records.forEach {
-            // Prefer the oldImage because the DynamoDB event may have been a deletion.
-            val image = it.dynamodb.oldImage ?: it.dynamodb.newImage
-            // Determine if this is a client or result record.
-            when (pkPrefix(image)) {
-                ClientRecord.CLIENT_PK_PREFIX -> handleClientRecord(it)
-                CheckResultRecord.RESULT_PK_PREFIX -> handleCheckResultRecord(it, checks)
+            val image = when (OperationType.fromValue(it.eventName)) {
+                OperationType.INSERT -> it.dynamodb.newImage
+                OperationType.MODIFY -> it.dynamodb.newImage
+                OperationType.REMOVE -> it.dynamodb.oldImage
+                null -> throw Exception("Unknown event name provided:  ${it.eventName}")
+            }
+            // Determine which kind of record this is.
+            val dataField = image.getOrDefault("data", defaultValue = AttributeValue("")).s
+            when (dataField) {
+                ClientRecord.DATA_FIELD -> handleClientRecord(it)
+                CheckResultRecord.DATA_FIELD -> handleCheckResultRecord(it, checks)
                 else -> log.error("Unable to determine record type.")
             }
         }
     }
-
-    /**
-     * Extract the prefix string from the primary (hash) key of the
-     * image provided by DynamoDB.
-     */
-    private fun pkPrefix(image: Map<String, AttributeValue>): String =
-            image.getOrDefault("pk", defaultValue = AttributeValue("")).s
-                    .takeWhile { it != '#' }
 
     private fun handleCheckResultRecord(record: DynamodbEvent.DynamodbStreamRecord, checks: List<CheckGroup>) {
         _checkResultProcessor.run(record, checks)

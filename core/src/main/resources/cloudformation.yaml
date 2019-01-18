@@ -179,6 +179,17 @@ Resources:
                   - dynamodb:UpdateItem
                 Resource:
                   - !GetAtt MonitoringTable.Arn
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                  - dynamodb:BatchGetItem
+                  - dynamodb:GetItem
+                Resource:
+                  - !Join
+                    - '/'
+                    - - !GetAtt MonitoringTable.Arn
+                      - 'index'
+                      - 'pk-data-index'
         - PolicyName: SQSClientQueues
           PolicyDocument:
             Version: 2012-10-17
@@ -541,11 +552,34 @@ Resources:
           AttributeType: S
         - AttributeName: sk
           AttributeType: S
+        - AttributeName: data
+          AttributeType: S
+        - AttributeName: active
+          AttributeType: S
       KeySchema:
         - AttributeName: pk
           KeyType: HASH
         - AttributeName: sk
           KeyType: RANGE
+      LocalSecondaryIndexes:
+        - IndexName: pk-data-index
+          KeySchema:
+            - AttributeName: pk
+              KeyType: HASH
+            - AttributeName: data
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      GlobalSecondaryIndexes:
+        # Sparse index for clients.
+        - IndexName: data-active-index
+          KeySchema:
+            - AttributeName: data
+              KeyType: HASH
+            - AttributeName: active
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
       Tags:

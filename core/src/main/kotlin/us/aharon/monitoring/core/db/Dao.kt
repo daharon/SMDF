@@ -18,10 +18,13 @@ internal class Dao : KoinComponent {
 
     fun getClient(name: String): ClientRecord? {
         val query = DynamoDBQueryExpression<ClientRecord>()
-                .withKeyConditionExpression("#pk = :clientId")
-                .withExpressionAttributeNames(mapOf("#pk" to "pk"))
-                .withExpressionAttributeValues(mapOf(":clientId" to AttributeValue(ClientRecord.generateId(name))))
+                .withKeyConditionExpression("#pk = :clientId AND #data = :data")
+                .withExpressionAttributeNames(mapOf("#pk" to "pk", "#data" to "data"))
+                .withExpressionAttributeValues(mapOf(
+                        ":clientId" to AttributeValue(name),
+                        ":data" to AttributeValue(ClientRecord.DATA_FIELD)))
                 .withConsistentRead(true)
+                .withIndexName(PK_DATA_INDEX)
                 .withLimit(1)
         val result = db.query(ClientRecord::class.java, query)
         return result.firstOrNull()

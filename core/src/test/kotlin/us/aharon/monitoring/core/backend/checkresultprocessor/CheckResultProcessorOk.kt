@@ -52,7 +52,7 @@ class CheckResultProcessorOk : KoinTest {
                     mapOf<String, AttributeValue>(
                             "pk" to AttributeValue(CheckResultRecord.generateResultId("test", "test-check", "server-1.example.com")),
                             "sk" to AttributeValue("2018-08-23T11:41:44Z"),  // completedAt
-                            "data" to AttributeValue(CheckResultRecord.generateDataKey("test", "test-check", "server-1.example.com")),
+                            "data" to AttributeValue("CHECK_RESULT"),
                             "executedAt" to AttributeValue("2018-08-23T11:40:44Z"),
                             "scheduledAt" to AttributeValue("2018-08-23T11:39:44Z"),
                             "group" to AttributeValue("test"),

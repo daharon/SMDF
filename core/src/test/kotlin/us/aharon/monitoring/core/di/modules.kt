@@ -67,7 +67,7 @@ internal val modules = module {
                 .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.UPDATE)
                 .withTableNameResolver { clazz: Class<*>, _: DynamoDBMapperConfig? ->
                     when (clazz) {
-                        ClientRecord::class.java -> "CLIENTS_TABLE"
+                        ClientRecord::class.java -> "TEST_TABLE"
                         CheckResultRecord::class.java -> "CHECK_RESULTS_TABLE"
                         else -> throw DynamoDBMappingException("Class must be defined in ${this::class.qualifiedName}")
                     }

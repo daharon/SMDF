@@ -38,5 +38,6 @@ class SuccessfulClientRegistration : KoinTest {
         val registrationResponse = ClientRegistration().run(registrationRequest)
         assert(registrationResponse.commandQueue.isNotEmpty())
         assert(registrationResponse.resultQueue.isNotEmpty())
+        // TODO: Query database for client record.
     }
 }
