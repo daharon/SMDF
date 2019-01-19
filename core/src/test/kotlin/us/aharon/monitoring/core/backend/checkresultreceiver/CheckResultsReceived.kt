@@ -19,7 +19,7 @@ import us.aharon.monitoring.core.backend.CheckResultReceiver
 import us.aharon.monitoring.core.common.SQSTestEvent
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
-import us.aharon.monitoring.core.extensions.CheckResultTableExtension
+import us.aharon.monitoring.core.extensions.DynamoDBTableExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
 import java.time.ZonedDateTime
@@ -29,7 +29,7 @@ import kotlin.test.assertEquals
 @Extensions(
     ExtendWith(LocalstackExtension::class),
     ExtendWith(LoadModulesExtension::class),
-    ExtendWith(CheckResultTableExtension::class))
+    ExtendWith(DynamoDBTableExtension::class))
 class CheckResultsReceived : KoinTest {
 
     private val db: DynamoDBMapper by inject()

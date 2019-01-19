@@ -23,7 +23,7 @@ import us.aharon.monitoring.core.checks.Check
 import us.aharon.monitoring.core.common.DynamodbTestEvent
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
-import us.aharon.monitoring.core.extensions.CheckResultTableExtension
+import us.aharon.monitoring.core.extensions.DynamoDBTableExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
 import us.aharon.monitoring.core.handlers.NotificationHandler
 
@@ -31,7 +31,7 @@ import us.aharon.monitoring.core.handlers.NotificationHandler
 @Extensions(
     ExtendWith(LocalstackExtension::class),
     ExtendWith(LoadModulesExtension::class),
-    ExtendWith(CheckResultTableExtension::class))
+    ExtendWith(DynamoDBTableExtension::class))
 class CheckResultProcessorOk : KoinTest {
 
     private val db: DynamoDBMapper by inject()

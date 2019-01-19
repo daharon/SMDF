@@ -13,7 +13,7 @@ import org.koin.test.KoinTest
 import us.aharon.monitoring.core.backend.ClientRegistration
 import us.aharon.monitoring.core.backend.messages.ClientRegistrationRequest
 import us.aharon.monitoring.core.extensions.ClientCheckTopicExtension
-import us.aharon.monitoring.core.extensions.ClientsTableExtension
+import us.aharon.monitoring.core.extensions.DynamoDBTableExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
 
@@ -21,7 +21,7 @@ import us.aharon.monitoring.core.extensions.LoadModulesExtension
     ExtendWith(LocalstackExtension::class),
     ExtendWith(LoadModulesExtension::class),
     ExtendWith(ClientCheckTopicExtension::class),
-    ExtendWith(ClientsTableExtension::class))
+    ExtendWith(DynamoDBTableExtension::class))
 class SuccessfulClientRegistration : KoinTest {
 
     companion object {
