@@ -44,7 +44,14 @@ internal class NotificationProcessor : KoinComponent {
         val handler = Class.forName(notification.handler).newInstance() as NotificationHandler
         // TODO: Implement AssumeRole operation to grant necessary user-defined access to the notification handler. Similar to [ServerlessExecutor].
         // Execute the handler.
-        db.saveNotification(handler, notification.checkResult.resultId!!, "Executing notification.")
-        handler.execute(check, notification.checkResult!!, context)
+        try {
+            handler.execute(check, notification.checkResult!!, context)
+        } catch (e: Exception) {
+            db.saveNotification(handler, notification.checkResult.resultId!!, notification.checkResult.completedAt!!,
+                    "Notification handler failed:  ${e.message}")
+            throw e
+        }
+        db.saveNotification(handler, notification.checkResult.resultId!!, notification.checkResult.completedAt!!,
+                "Executed notification.")
     }
 }

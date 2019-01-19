@@ -42,10 +42,12 @@ internal class Dao : KoinComponent {
         db.batchSave(client, clientHistoryEntry)
     }
 
-    fun saveNotification(handler: NotificationHandler, resultId: String, description: String) {
+    fun saveNotification(handler: NotificationHandler, resultId: String, resultCompletedAt: ZonedDateTime,
+                         description: String) {
         val notification = NotificationRecord(
                 handler = handler::class.java.canonicalName,
                 resultId = resultId,
+                resultCompletedAt = resultCompletedAt,
                 description = description)
         db.save(notification)
     }

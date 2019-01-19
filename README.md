@@ -92,7 +92,7 @@ The `Application` class.
     - Read from the client's check queue.
     - Write to the result queue.
     - The Policy and Role should have fixed names.
-- [ ] Refactor DynamoDB tables into single table.
+- [x] Refactor DynamoDB tables into single table.
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html?shortFooter=true
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html
 - [ ] Refactor DSL to use Builder Pattern and `@DslMarker` annotation correctly.

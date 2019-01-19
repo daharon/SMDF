@@ -22,8 +22,12 @@ internal data class NotificationRecord(
         var handler: String? = null,
 
         @DynamoDBAttribute
-        @DynamoDBNamed("result_id")
         var resultId: String? = null,
+
+        @DynamoDBAttribute
+        @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
+        @DynamoDBTypeConverted(converter = ZonedDateTimeConverter::class)
+        var resultCompletedAt: ZonedDateTime? = null,
 
         @DynamoDBAttribute
         var description: String? = null
