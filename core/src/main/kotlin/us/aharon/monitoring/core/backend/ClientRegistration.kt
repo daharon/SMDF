@@ -92,7 +92,7 @@ class ClientRegistration : KoinComponent {
                             queueArn = qns.queueArn,
                             queueUrl = qns.queueUrl,
                             subscriptionArn = qns.subscriptionArn)
-                    db.saveClient(clientRecord)
+                    db.saveClient(clientRecord, "Updated client with tags ${clientRecord.tags}.")
                     log.info("Saved client to database:  $clientRecord")
                     ClientRegistrationResponse(
                             commandQueue = qns.queueUrl,
@@ -114,7 +114,7 @@ class ClientRegistration : KoinComponent {
                         queueArn = qns.queueArn,
                         queueUrl = qns.queueUrl,
                         subscriptionArn = qns.subscriptionArn)
-                db.saveClient(clientRecord)
+                db.saveClient(clientRecord, "Created client with tags ${clientRecord.tags}.")
                 log.info("Saved client to database:  $clientRecord")
 
                 ClientRegistrationResponse(

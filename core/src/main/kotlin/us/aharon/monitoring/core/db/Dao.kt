@@ -10,6 +10,10 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
+import us.aharon.monitoring.core.handlers.NotificationHandler
+
+import java.time.ZonedDateTime
+
 
 internal class Dao : KoinComponent {
 
@@ -30,7 +34,21 @@ internal class Dao : KoinComponent {
         return result.firstOrNull()
     }
 
-    fun saveClient(client: ClientRecord) = db.save(client)
+    fun saveClient(client: ClientRecord, description: String = "Client updated.") {
+        val clientHistoryEntry = ClientHistoryRecord(
+                name = client.name,
+                timestamp = ZonedDateTime.now(),
+                description = description)
+        db.batchSave(client, clientHistoryEntry)
+    }
+
+    fun saveNotification(handler: NotificationHandler, resultId: String, description: String) {
+        val notification = NotificationRecord(
+                handler = handler::class.java.canonicalName,
+                resultId = resultId,
+                description = description)
+        db.save(notification)
+    }
 
     fun marshallClientRecord(itemAttributes: Map<String, AttributeValue>): ClientRecord =
             db.marshallIntoObject(ClientRecord::class.java, itemAttributes)

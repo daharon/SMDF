@@ -30,9 +30,7 @@ import mu.KotlinLogging
 import org.koin.dsl.module.module
 
 import us.aharon.monitoring.core.common.FAKE_SNS_SUBSCRIPTION_ARN
-import us.aharon.monitoring.core.db.CheckResultRecord
-import us.aharon.monitoring.core.db.ClientRecord
-import us.aharon.monitoring.core.db.Dao
+import us.aharon.monitoring.core.db.*
 import us.aharon.monitoring.core.extensions.DYNAMODB_TEST_TABLE_NAME
 import us.aharon.monitoring.core.util.Env
 
@@ -69,7 +67,9 @@ internal val modules = module {
                 .withTableNameResolver { clazz: Class<*>, _: DynamoDBMapperConfig? ->
                     when (clazz) {
                         ClientRecord::class.java -> DYNAMODB_TEST_TABLE_NAME
+                        ClientHistoryRecord::class.java -> DYNAMODB_TEST_TABLE_NAME
                         CheckResultRecord::class.java -> DYNAMODB_TEST_TABLE_NAME
+                        NotificationRecord::class.java -> DYNAMODB_TEST_TABLE_NAME
                         else -> throw DynamoDBMappingException("Class must be defined in ${this::class.qualifiedName}")
                     }
                 }

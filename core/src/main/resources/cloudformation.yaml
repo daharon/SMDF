@@ -116,6 +116,7 @@ Resources:
       Environment:
         Variables:
           ENVIRONMENT: '${environment}'
+          DB_TABLE: !Ref MonitoringTable
       Tags:
         - Key: App
           Value: Monitoring
@@ -165,7 +166,7 @@ Resources:
             Action:
               - sts:AssumeRole
       Policies:
-        - PolicyName: DynamoDBClientsTable
+        - PolicyName: DynamoDBTable
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -351,7 +352,7 @@ Resources:
                   - sqs:GetQueueAttributes
                 Resource:
                   - !GetAtt MonitoringCheckResultQueue.Arn
-        - PolicyName: DynamoDBCheckResultsTable
+        - PolicyName: DynamoDBTable
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -390,6 +391,16 @@ Resources:
                   - sqs:GetQueueAttributes
                 Resource:
                   - !GetAtt MonitoringNotificationQueue.Arn
+        - PolicyName: DynamoDBTable
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:PutItem
+                Resource:
+                  - !GetAtt MonitoringTable.Arn
 
   MonitoringServerlessCheckProcessorRole:
     Type: AWS::IAM::Role

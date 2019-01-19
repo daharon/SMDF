@@ -20,6 +20,7 @@ import us.aharon.monitoring.core.common.TestLambdaContext
 import us.aharon.monitoring.core.common.TestNotificationHandler
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
+import us.aharon.monitoring.core.extensions.DynamoDBTableExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
 import java.time.ZonedDateTime
@@ -27,7 +28,8 @@ import java.time.ZonedDateTime
 
 @Extensions(
     ExtendWith(LocalstackExtension::class),
-    ExtendWith(LoadModulesExtension::class))
+    ExtendWith(LoadModulesExtension::class),
+    ExtendWith(DynamoDBTableExtension::class))
 class MinimalNotification : KoinTest {
 
     private val json: ObjectMapper by inject()
