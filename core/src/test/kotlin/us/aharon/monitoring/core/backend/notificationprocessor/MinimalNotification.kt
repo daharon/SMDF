@@ -17,6 +17,7 @@ import us.aharon.monitoring.core.api.check
 import us.aharon.monitoring.core.backend.NotificationProcessor
 import us.aharon.monitoring.core.common.SQSTestEvent
 import us.aharon.monitoring.core.common.TestLambdaContext
+import us.aharon.monitoring.core.common.TestNotificationHandler
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
 import us.aharon.monitoring.core.extensions.LoadModulesExtension

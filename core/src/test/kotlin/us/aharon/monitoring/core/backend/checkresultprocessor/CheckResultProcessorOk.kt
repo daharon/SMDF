@@ -9,7 +9,6 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.dynamodbv2.model.StreamRecord
-import com.amazonaws.services.lambda.runtime.Context
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.Extensions
@@ -19,13 +18,12 @@ import org.koin.test.KoinTest
 import us.aharon.monitoring.core.api.checks
 import us.aharon.monitoring.core.api.check
 import us.aharon.monitoring.core.backend.CheckResultProcessor
-import us.aharon.monitoring.core.checks.Check
 import us.aharon.monitoring.core.common.DynamodbTestEvent
+import us.aharon.monitoring.core.common.TestNotificationHandler
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
 import us.aharon.monitoring.core.extensions.DynamoDBTableExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
-import us.aharon.monitoring.core.handlers.NotificationHandler
 
 
 @Extensions(
@@ -63,16 +61,6 @@ class CheckResultProcessorOk : KoinTest {
                     )
             ) to OperationType.INSERT
     ))
-
-    class TestNotificationHandler : NotificationHandler() {
-        override val policies: List<String> = emptyList()
-
-        override fun run(check: Check, checkResult: CheckResultRecord, ctx: Context) {
-            println("Running notification for:")
-            println("Check:  $check")
-            println("Check Result:  $checkResult")
-        }
-    }
 
 
     @Test

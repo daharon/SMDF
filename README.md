@@ -86,7 +86,13 @@ The `Application` class.
     - This runs separate from the regular check-scheduler.
     - Send a "heartbeat" message to all clients.
     - Record the last heartbeat in the database under the Client's metadata.
-- [ ] Refactor DynamoDB table into single table.
+- [ ] Add IAM Policy and Role for clients.
+    - Read from the Parameter Store value for registration.
+    - Invoke the registration Lambda function.
+    - Read from the client's check queue.
+    - Write to the result queue.
+    - The Policy and Role should have fixed names.
+- [ ] Refactor DynamoDB tables into single table.
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html?shortFooter=true
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html
 - [ ] Refactor DSL to use Builder Pattern and `@DslMarker` annotation correctly.

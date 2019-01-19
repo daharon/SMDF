@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2018 Daniel Aharon
+ * Copyright (c) 2019 Daniel Aharon
  */
 
-package us.aharon.monitoring.core.backend.notificationprocessor
+package us.aharon.monitoring.core.common
 
 import com.amazonaws.services.lambda.runtime.Context
 
