@@ -11,13 +11,16 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException
+import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
+import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementAsyncClientBuilder
+import com.amazonaws.services.simplesystemsmanagement.model.GetParameterResult
+import com.amazonaws.services.simplesystemsmanagement.model.Parameter
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.AmazonSNSClientBuilder
 import com.amazonaws.services.sns.model.SubscribeResult
 import com.amazonaws.services.sns.model.UnsubscribeRequest
 import com.amazonaws.services.sns.model.UnsubscribeResult
 import com.amazonaws.services.sqs.AmazonSQS
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder
 import com.amazonaws.services.sqs.model.TagQueueResult
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -36,7 +39,6 @@ import us.aharon.monitoring.core.util.Env
 
 
 private const val LOCALSTACK_SNS_PORT = 4575
-private const val LOCALSTACK_SQS_PORT = 4576
 private const val LOCALSTACK_DYNAMODB_PORT = 4569
 
 
@@ -58,10 +60,6 @@ internal val modules = module {
     single<AmazonSNS> { mockedAmazonSNS() }
     single<AmazonSQS> { mockedAmazonSQS() }
     single<DynamoDBMapper> {
-        val client = AmazonDynamoDBClientBuilder.standard()
-                .withEndpointConfiguration(
-                        AwsClientBuilder.EndpointConfiguration("http://localhost:$LOCALSTACK_DYNAMODB_PORT", "us-east-1"))
-                .build()
         val config = DynamoDBMapperConfig.builder()
                 .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.UPDATE)
                 .withTableNameResolver { clazz: Class<*>, _: DynamoDBMapperConfig? ->
@@ -74,7 +72,7 @@ internal val modules = module {
                     }
                 }
                 .build()
-        DynamoDBMapper(client, config)
+        DynamoDBMapper(get(), config)
     }
     single<AmazonDynamoDB> {
         AmazonDynamoDBClientBuilder.standard()
@@ -82,6 +80,7 @@ internal val modules = module {
                         AwsClientBuilder.EndpointConfiguration("http://localhost:$LOCALSTACK_DYNAMODB_PORT", "us-east-1"))
                 .build()
     }
+    single<AWSSimpleSystemsManagement> { mockedAWSSimpleSystemsManagement() }
     single<Dao> { Dao() }
 }
 
@@ -89,11 +88,7 @@ internal val modules = module {
  * Mock the [AmazonSQS] class because some functionality is not provided by LocalStack.
  */
 private fun mockedAmazonSQS(): AmazonSQS {
-    val sqs = spyk(
-            AmazonSQSClientBuilder.standard()
-                    .withEndpointConfiguration(
-                            AwsClientBuilder.EndpointConfiguration("http://localhost:$LOCALSTACK_SQS_PORT", "us-east-1"))
-                    .build())
+    val sqs = spyk(cloud.localstack.TestUtils.getClientSQS())
     // Calling AmazonSQS::tagQueue on Localstack causes error.
     every { sqs.tagQueue(any(), any()) } returns TagQueueResult()
     return sqs
@@ -116,4 +111,14 @@ private fun mockedAmazonSNS(): AmazonSNS {
     every { sns.subscribe(any()) } returns SubscribeResult().withSubscriptionArn(FAKE_SNS_SUBSCRIPTION_ARN)
     every { sns.unsubscribe(UnsubscribeRequest(FAKE_SNS_SUBSCRIPTION_ARN)) } returns UnsubscribeResult()
     return sns
+}
+
+/**
+ * Mock the [AWSSimpleSystemsManagement] class because it doesn't work locally.
+ */
+private fun mockedAWSSimpleSystemsManagement(): AWSSimpleSystemsManagement {
+    val ssm: AWSSimpleSystemsManagement = spyk(
+            AWSSimpleSystemsManagementAsyncClientBuilder.defaultClient())
+    every { ssm.getParameter(any()) } returns GetParameterResult().withParameter(Parameter().withValue(""))
+    return ssm
 }
