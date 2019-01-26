@@ -9,6 +9,7 @@ import us.aharon.monitoring.core.api.check
 import us.aharon.monitoring.core.api.serverlessCheck
 
 import us.aharon.monitoring.example.executors.CheckRunningInUSEast1
+import us.aharon.monitoring.example.executors.CheckWithPermissions
 import us.aharon.monitoring.example.handlers.DefaultHandler
 
 
@@ -62,6 +63,14 @@ val SYSTEM_CHECKS = checks("system") {
      */
     defaultServerlessCheck("User defined serverless check template") {
         executor = CheckRunningInUSEast1::class
+        interval = 3
+    }
+
+    /**
+     * Serverless check with IAM permissions.
+     */
+    defaultServerlessCheck("Check with IAM permissions") {
+        executor = CheckWithPermissions::class
         interval = 3
     }
 }

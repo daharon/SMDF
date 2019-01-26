@@ -17,7 +17,7 @@ import us.aharon.monitoring.core.checks.*
  */
 class CheckRunningInUSEast1 : ServerlessExecutor() {
 
-    override val policies: List<String> = emptyList()
+    override val permissions: List<Permission> = emptyList()
 
 
     override fun run(check: ServerlessCheck, ctx: Context): Result {
@@ -25,8 +25,8 @@ class CheckRunningInUSEast1 : ServerlessExecutor() {
         // https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html
         val currentRegion = System.getenv("AWS_REGION")
 
-        if (currentRegion == Regions.US_EAST_1.name) {
-            return Ok("We're in the correct region!")
+        if (currentRegion.toLowerCase() == Regions.US_EAST_1.name.toLowerCase()) {
+            return Ok("We're in $currentRegion, the correct region!")
         }
         return Critical("We're in $currentRegion, which is not the correct region!")
     }

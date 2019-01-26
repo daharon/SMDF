@@ -439,6 +439,68 @@ Resources:
                   - sqs:SendMessage
                 Resource:
                   - !GetAtt MonitoringCheckResultQueue.Arn
+        - PolicyName: ParameterStore
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource:
+                  - !Join
+                    - ':'
+                    - - 'arn:aws:ssm'
+                      - !Ref 'AWS::Region'
+                      - !Ref 'AWS::AccountId'
+                      - 'parameter${serverlessExecutorParameterPath}/*'
+
+  ##
+  # IAM Roles for Serverless Executors
+  ##
+  <#list serverlessExecutorPermissions as name, permissions>
+    <#assign shortName = name?split(".")?last>
+  MonitoringServerlessExecutor${shortName}Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: '/monitoring/${environment}/'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+              AWS:
+                - !GetAtt MonitoringServerlessCheckProcessorRole.Arn
+            Action:
+              - sts:AssumeRole
+      <#if permissions?has_content>
+      Policies:
+        <#list permissions as permission>
+        - PolicyName: '${permission.hashCode()?abs?string.computer}'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  <#list permission.actions as action>
+                  - ${action}
+                  </#list>
+                Resource:
+                  <#list permission.resources as resource>
+                  - '${resource}'
+                  </#list>
+        </#list>
+      </#if>
+  MonitoringServerlessExecutor${shortName}Parameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: IAM role for the ${shortName} serverless check.
+      Name: '${serverlessExecutorParameterPath}/${name}'
+      Type: String
+      Value: !GetAtt MonitoringServerlessExecutor${shortName}Role.Arn
+
+  </#list>
 
   ##
   # Parameter Store

@@ -82,6 +82,8 @@ The `Application` class.
 - The `NotificationHandler` abstract class.
 
 ## TODO
+- [ ] Enable log-level control.
+    - Move the verbose logging to the DEBUG log level.
 - [ ] Add `heartbeat` check.
     - This runs separate from the regular check-scheduler.
     - Send a "heartbeat" message to all clients.

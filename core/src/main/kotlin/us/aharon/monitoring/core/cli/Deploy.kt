@@ -13,6 +13,8 @@ import picocli.CommandLine.ParentCommand
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 
+import us.aharon.monitoring.core.checks.serverlessExecutorParameterPath
+import us.aharon.monitoring.core.checks.serverlessExecutorPermissions
 import us.aharon.monitoring.core.util.getJarAbsolutePath
 import us.aharon.monitoring.core.util.getJarFilename
 
@@ -232,6 +234,9 @@ internal class Deploy : Runnable {
                 // Code
                 "codeS3Bucket" to s3Dest.bucket,
                 "codeS3Key" to "${s3Dest.path}/${getJarFilename(parent.app::class)}",
+                // Serverless check executor permissions
+                "serverlessExecutorPermissions" to parent.app.checks.serverlessExecutorPermissions(),
+                "serverlessExecutorParameterPath" to serverlessExecutorParameterPath(environment),
                 // Functions
                 "clientRegistrationHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientRegistration.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",

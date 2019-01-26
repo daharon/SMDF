@@ -39,12 +39,10 @@ data class Unknown(override val output: String) : Result() {
 abstract class ServerlessExecutor {
 
     /**
-     * Specify IAM policies which this handler requires.
-     *
-     * - Policy documents.
-     * - Policy ARNs.
+     * Specify IAM policy permissions which this handler requires.
+     * See [Permission] class.
      */
-    abstract val policies: List<String>
+    abstract val permissions: List<Permission>
 
     /**
      * Implement this function.

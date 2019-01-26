@@ -9,7 +9,7 @@ import com.amazonaws.services.lambda.runtime.Context
 
 class FailServerlessExecutor : ServerlessExecutor() {
 
-    override val policies: List<String> = emptyList()
+    override val permissions: List<Permission> = emptyList()
 
 
     override fun run(check: ServerlessCheck, ctx: Context): Result {
