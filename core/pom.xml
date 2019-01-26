@@ -16,7 +16,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <aws.java.sdk.version>1.11.453</aws.java.sdk.version>
+        <aws.java.sdk.version>1.11.490</aws.java.sdk.version>
         <koin.version>1.0.2</koin.version>
     </properties>
 
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
-            <version>3.8.0</version>
+            <version>3.9.2</version>
         </dependency>
 
         <!-- JSON -->
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>io.github.microutils</groupId>
             <artifactId>kotlin-logging</artifactId>
-            <version>1.6.20</version>
+            <version>1.6.22</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-events</artifactId>
-            <version>2.2.4</version>
+            <version>2.2.5</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -132,7 +132,7 @@
         <dependency>
             <groupId>io.mockk</groupId>
             <artifactId>mockk</artifactId>
-            <version>1.8.13</version>
+            <version>1.9</version>
             <scope>test</scope>
         </dependency>
 
