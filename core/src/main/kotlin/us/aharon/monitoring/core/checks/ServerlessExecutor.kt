@@ -4,6 +4,7 @@
 
 package us.aharon.monitoring.core.checks
 
+import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.lambda.runtime.Context
 
 import us.aharon.monitoring.core.db.CheckResultStatus
@@ -45,17 +46,21 @@ abstract class ServerlessExecutor {
     abstract val permissions: List<Permission>
 
     /**
-     * Implement this function.
+     * Perform the desired check operation and return with a [Result].
+     *
+     * @param check The [ServerlessCheck] which triggered this execution.
+     * @param ctx The [Context] as provided by the AWS Lambda runtime.
+     * @param credentials AWS credentials which have the permissions as defined in the [permissions] list of this class.
+     *
+     * @return One of the following:  [Ok], [Warning], [Critical], [Unknown]
      */
-    abstract fun run(check: ServerlessCheck, ctx: Context): Result
-
+    abstract fun run(check: ServerlessCheck, ctx: Context, credentials: AWSCredentialsProvider): Result
 
     /**
      * Wrapper for the [run] function.
      */
-    fun execute(check: ServerlessCheck, context: Context): Result = try {
-        // TODO:  Implement AssumeRole operation using the IAM Role generated to allow the policies defined in the variable above.
-        this.run(check, context)
+    internal fun execute(check: ServerlessCheck, context: Context, credentials: AWSCredentialsProvider): Result = try {
+        this.run(check, context, credentials)
     } catch (e: Exception) {
         Critical(e.message ?: e.toString())
     }

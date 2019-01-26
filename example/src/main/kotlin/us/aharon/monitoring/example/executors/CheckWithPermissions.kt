@@ -4,6 +4,8 @@
 
 package us.aharon.monitoring.example.executors
 
+import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 import com.amazonaws.services.lambda.runtime.Context
 
 import us.aharon.monitoring.core.checks.*
@@ -20,5 +22,11 @@ class CheckWithPermissions : ServerlessExecutor() {
                     resources = listOf("*"))
     )
 
-    override fun run(check: ServerlessCheck, ctx: Context): Result = Ok(output = "All OK")
+    override fun run(check: ServerlessCheck, ctx: Context, credentials: AWSCredentialsProvider): Result {
+        val iamClient = AmazonIdentityManagementClientBuilder.standard()
+                .withCredentials(credentials)
+                .build()
+        val iamUsers = iamClient.listUsers().users
+        return Ok("OK - ${iamUsers.map { it.userName }}")
+    }
 }

@@ -7,8 +7,6 @@ package us.aharon.monitoring.core.di
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementAsyncClientBuilder
 import com.amazonaws.services.sns.AmazonSNS
@@ -48,7 +46,6 @@ internal val modules = module {
         DynamoDBMapper(client, config)
     }
     single<AmazonSQS> { AmazonSQSClientBuilder.standard().build() }
-    single<AWSSecurityTokenService> { AWSSecurityTokenServiceClientBuilder.defaultClient() }
     single<AWSSimpleSystemsManagement> { AWSSimpleSystemsManagementAsyncClientBuilder.defaultClient() }
     single<Dao> { Dao() }
 }

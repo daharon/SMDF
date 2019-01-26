@@ -4,6 +4,7 @@
 
 package us.aharon.monitoring.example.executors
 
+import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.lambda.runtime.Context
 
@@ -20,7 +21,7 @@ class CheckRunningInUSEast1 : ServerlessExecutor() {
     override val permissions: List<Permission> = emptyList()
 
 
-    override fun run(check: ServerlessCheck, ctx: Context): Result {
+    override fun run(check: ServerlessCheck, ctx: Context, credentials: AWSCredentialsProvider): Result {
         // This environment variable is provided by AWS Lambda.
         // https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html
         val currentRegion = System.getenv("AWS_REGION")
