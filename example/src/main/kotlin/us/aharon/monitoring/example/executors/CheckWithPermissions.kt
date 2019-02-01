@@ -27,6 +27,7 @@ class CheckWithPermissions : ServerlessExecutor() {
                 .withCredentials(credentials)
                 .build()
         val iamUsers = iamClient.listUsers().users
+        ctx.logger.log("Found the following users:  $iamUsers")
         return Ok("OK - ${iamUsers.map { it.userName }}")
     }
 }

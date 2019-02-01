@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Daniel Aharon
+ * Copyright (c) 2019 Daniel Aharon
  */
 
 package us.aharon.monitoring.example.handlers
@@ -14,14 +14,17 @@ import us.aharon.monitoring.core.handlers.NotificationHandler
 
 
 /**
- * https://docs.sensu.io/sensu-core/1.4/reference/handlers/#handler-configuration
+ * Example notification handler that sets IAM policies/permissions.
  */
-class DefaultHandler : NotificationHandler() {
+class PermissionsNotificationHandler : NotificationHandler() {
 
-    override val permissions: List<Permission> = emptyList()
-
+    override val permissions: List<Permission> = listOf(
+            Permission(
+                    actions = listOf("ses:SendEmail"),
+                    resources = listOf("arn:aws:ses:*:*:identity/example.com"))
+    )
 
     override fun run(check: Check, checkResult: CheckResultRecord, ctx: Context, credentials: AWSCredentialsProvider) {
-        ctx.logger.log("${this::class.qualifiedName} received the following check result:  $checkResult")
+        ctx.logger.log("This notification handler is using the following credentials:  $credentials")
     }
 }

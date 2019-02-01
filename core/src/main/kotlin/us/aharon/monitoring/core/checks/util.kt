@@ -20,3 +20,10 @@ internal fun List<CheckGroup>.getCheck(group: String, name: String): Check = thi
  */
 internal fun serverlessExecutorParameterPath(environment: String): String =
         "/$environment/monitoring/role"
+
+/**
+ * The Parameter Store path that contains the ARNs which correspond to
+ * notification handlers.
+ */
+internal fun notificationHandlerParameterPath(environment: String): String =
+        "/$environment/monitoring/role"

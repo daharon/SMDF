@@ -103,9 +103,10 @@ The `Application` class.
     - https://youtu.be/Rvx_BfG3NDo?t=2090
 - [x] Specify `Environment` for all AWS resources.
     - See `Deploy` class.
-- [ ] Create IAM Role with specified policies for the `NotificationHandler` abstract base class.
+- [x] Create IAM Role with specified policies for the `NotificationHandler` abstract base class.
     - Assume the appropriate IAM Role in the `NotificationProcessor`.
-- [ ] Create IAM Role with the specified policies for the `ServerlessExecutor` abstract base class.    
+- [x] Create IAM Role with the specified policies for the `ServerlessExecutor` abstract base class.    
     - Assume the appropriate IAM Role in the `ServerlessCheckProcessor`.
 - [ ] Refactor logging to use a different backend.
     - Lambda cold-start time may be improved by using `tinylog` or `logback`.
+- [ ] Change check notification handlers from a `List` to a `Set`.

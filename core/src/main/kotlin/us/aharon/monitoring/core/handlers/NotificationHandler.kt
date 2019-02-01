@@ -4,9 +4,11 @@
 
 package us.aharon.monitoring.core.handlers
 
+import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.lambda.runtime.Context
 
 import us.aharon.monitoring.core.checks.Check
+import us.aharon.monitoring.core.checks.Permission
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.filters.Filter
 import us.aharon.monitoring.core.mutators.Mutator
@@ -31,21 +33,16 @@ abstract class NotificationHandler {
      * - Policy documents.
      * - Policy ARNs.
      */
-    abstract val policies: List<String>
+    abstract val permissions: List<Permission>
 
 
     /**
-     * Implement this function.
+     * Perform the desired notification operation.
+     *
+     * @param check The [Check] which triggered this execution.
+     * @param checkResult The check result which triggered this execution.
+     * @param ctx The [Context] as provided by the AWS Lambda runtime.
+     * @param credentials AWS credentials which have the permissions as defined in the [permissions] list of this class.
      */
-    abstract fun run(check: Check, checkResult: CheckResultRecord, ctx: Context)
-
-    /**
-     * Wrapper for the [run] function.
-     */
-    fun execute(check: Check, checkResult: CheckResultRecord, ctx: Context) {
-        // STS AssumeRole
-
-        // Run handler implementation.
-        this.run(check, checkResult, ctx)
-    }
+    abstract fun run(check: Check, checkResult: CheckResultRecord, ctx: Context, credentials: AWSCredentialsProvider)
 }

@@ -24,9 +24,9 @@ class CheckRunningInUSEast1 : ServerlessExecutor() {
     override fun run(check: ServerlessCheck, ctx: Context, credentials: AWSCredentialsProvider): Result {
         // This environment variable is provided by AWS Lambda.
         // https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html
-        val currentRegion = System.getenv("AWS_REGION")
+        val currentRegion = Regions.fromName(System.getenv("AWS_REGION"))
 
-        if (currentRegion.toLowerCase() == Regions.US_EAST_1.name.toLowerCase()) {
+        if (currentRegion == Regions.US_EAST_1) {
             return Ok("We're in $currentRegion, the correct region!")
         }
         return Critical("We're in $currentRegion, which is not the correct region!")

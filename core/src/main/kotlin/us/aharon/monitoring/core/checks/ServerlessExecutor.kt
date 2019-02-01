@@ -60,6 +60,7 @@ abstract class ServerlessExecutor {
      * Wrapper for the [run] function.
      */
     internal fun execute(check: ServerlessCheck, context: Context, credentials: AWSCredentialsProvider): Result = try {
+        // TODO: This try-catch block duplicates functionality in the ServerlessCheckProcessor.
         this.run(check, context, credentials)
     } catch (e: Exception) {
         Critical(e.message ?: e.toString())

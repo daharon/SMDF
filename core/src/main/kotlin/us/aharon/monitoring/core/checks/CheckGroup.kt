@@ -4,6 +4,9 @@
 
 package us.aharon.monitoring.core.checks
 
+import us.aharon.monitoring.core.handlers.NotificationHandler
+
+import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
 
@@ -36,4 +39,24 @@ internal fun List<CheckGroup>.serverlessExecutorPermissions(): Map<String, List<
                         emptyList<Permission>()
                     }
                 }
+        )
+
+/**
+ * Extract the permissions required by the notification handlers in use.
+ *
+ * @return Map of the handlers' names to a list of their permissions.
+ */
+internal fun List<CheckGroup>.notificationHandlerPermissions(): Map<String, List<Permission>> =
+        this.flatMap<CheckGroup, KClass<out NotificationHandler>> { checkGroup ->
+            checkGroup.checks.flatMap { it.handlers }
+        }.mapNotNull {
+            val constructor = it.primaryConstructor
+            if (constructor != null && constructor.parameters.isEmpty()) {
+                constructor.call()
+            } else {
+                null
+            }
+        }.associateBy<NotificationHandler, String, List<Permission>>(
+                { it::class.qualifiedName!! },
+                { it.permissions }
         )

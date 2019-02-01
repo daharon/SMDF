@@ -13,6 +13,8 @@ import picocli.CommandLine.ParentCommand
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 
+import us.aharon.monitoring.core.checks.notificationHandlerParameterPath
+import us.aharon.monitoring.core.checks.notificationHandlerPermissions
 import us.aharon.monitoring.core.checks.serverlessExecutorParameterPath
 import us.aharon.monitoring.core.checks.serverlessExecutorPermissions
 import us.aharon.monitoring.core.util.getJarAbsolutePath
@@ -237,6 +239,9 @@ internal class Deploy : Runnable {
                 // Serverless check executor permissions
                 "serverlessExecutorPermissions" to parent.app.checks.serverlessExecutorPermissions(),
                 "serverlessExecutorParameterPath" to serverlessExecutorParameterPath(environment),
+                // Notification handler permissions
+                "notificationHandlerPermissions" to parent.app.checks.notificationHandlerPermissions(),
+                "notificationHandlerParameterPath" to notificationHandlerParameterPath(environment),
                 // Functions
                 "clientRegistrationHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientRegistration.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",

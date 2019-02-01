@@ -401,6 +401,20 @@ Resources:
                   - dynamodb:PutItem
                 Resource:
                   - !GetAtt MonitoringTable.Arn
+        - PolicyName: ParameterStore
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource:
+                  - !Join
+                    - ':'
+                    - - 'arn:aws:ssm'
+                      - !Ref 'AWS::Region'
+                      - !Ref 'AWS::AccountId'
+                      - 'parameter${notificationHandlerParameterPath}/*'
 
   MonitoringServerlessCheckProcessorRole:
     Type: AWS::IAM::Role
@@ -499,6 +513,54 @@ Resources:
       Name: '${serverlessExecutorParameterPath}/${name}'
       Type: String
       Value: !GetAtt MonitoringServerlessExecutor${shortName}Role.Arn
+
+  </#list>
+
+  ##
+  # IAM Roles for Notification Handlers
+  ##
+  <#list notificationHandlerPermissions as name, permissions>
+    <#assign shortName = name?split(".")?last>
+  MonitoringNotificationHandler${shortName}Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: '/monitoring/${environment}/'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+              AWS:
+                - !GetAtt MonitoringNotificationProcessorRole.Arn
+            Action:
+              - sts:AssumeRole
+      <#if permissions?has_content>
+      Policies:
+        <#list permissions as permission>
+        - PolicyName: '${permission.hashCode()?abs?string.computer}'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  <#list permission.actions as action>
+                  - ${action}
+                  </#list>
+                Resource:
+                  <#list permission.resources as resource>
+                  - '${resource}'
+                  </#list>
+        </#list>
+      </#if>
+  MonitoringNotificationHandler${shortName}Parameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: IAM role for the ${shortName} notification handler.
+      Name: '${notificationHandlerParameterPath}/${name}'
+      Type: String
+      Value: !GetAtt MonitoringNotificationHandler${shortName}Role.Arn
 
   </#list>
 
