@@ -4,11 +4,8 @@
 
 package us.aharon.monitoring.core.backend
 
-import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import mu.KLogger
@@ -31,13 +28,14 @@ import us.aharon.monitoring.core.util.Env
  * - Instantiate the given notification handler.
  * - Run the event handler.
  */
-internal class NotificationProcessor : KoinComponent {
+internal class NotificationProcessor :
+        KoinComponent,
+        AssumeRoleable by AssumeRole() {
 
     private val env: Env by inject()
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
     private val json: ObjectMapper by inject()
     private val db: Dao by inject()
-    private val ssm: AWSSimpleSystemsManagement by inject()
 
 
     /**
@@ -50,17 +48,9 @@ internal class NotificationProcessor : KoinComponent {
         // Create an instance of the handler given its fully qualified name.
         val handler = Class.forName(notification.handler).newInstance() as NotificationHandler
 
-        // Get the role ARN from the parameter store.
-        val paramRequest = GetParameterRequest()
-                .withName("${notificationHandlerParameterPath(env.get("ENVIRONMENT"))}/${handler::class.qualifiedName}")
-        val notificationHandlerRoleArn = ssm.getParameter(paramRequest).parameter.value
-        log.info { "Notification handler role ARN:  $notificationHandlerRoleArn" }
-
-        // Create an IAM credentials provider that assumes the notification handler's role.
-        val sessionName = "${handler::class.java.simpleName}-${env.get("ENVIRONMENT")}"
-        val credentialsProvider = STSAssumeRoleSessionCredentialsProvider
-                .Builder(notificationHandlerRoleArn, sessionName)
-                .build()
+        val credentialsProvider = getCredentials(
+                "${notificationHandlerParameterPath(env.get("ENVIRONMENT"))}/${handler::class.qualifiedName}",
+                "${handler::class.java.simpleName}-${env.get("ENVIRONMENT")}")
 
         // Execute the handler.
         try {

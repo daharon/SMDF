@@ -4,11 +4,8 @@
 
 package us.aharon.monitoring.core.backend
 
-import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.model.SendMessageRequest
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -32,13 +29,14 @@ import java.time.ZonedDateTime
  * - Instantiate the given serverless check class.
  * - Run the check.
  */
-internal class ServerlessCheckProcessor : KoinComponent {
+internal class ServerlessCheckProcessor :
+        KoinComponent,
+        AssumeRoleable by AssumeRole() {
 
     private val env: Env by inject()
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
     private val json: ObjectMapper by inject()
     private val sqs: AmazonSQS by inject()
-    private val ssm: AWSSimpleSystemsManagement by inject()
 
     private val CHECK_RESULT_QUEUE by lazy { env.get("CHECK_RESULTS_QUEUE") }
 
@@ -50,22 +48,14 @@ internal class ServerlessCheckProcessor : KoinComponent {
         // Create an instance of the executor given its fully qualified name.
         val serverlessExecutor = Class.forName(checkMsg.executor).newInstance() as ServerlessExecutor
 
-        // Get the role ARN from the parameter store.
-        val paramRequest = GetParameterRequest()
-                .withName("${serverlessExecutorParameterPath(env.get("ENVIRONMENT"))}/${checkMsg.executor}")
-        val serverlessExecutorRoleArn = ssm.getParameter(paramRequest).parameter.value
-        log.info { "Serverless executor role ARN:  $serverlessExecutorRoleArn" }
-
-        // Create an IAM credentials provider that assumes the serverless executor role.
-        val sessionName = "${serverlessExecutor::class.java.simpleName}-${env.get("ENVIRONMENT")}"
-        val credentialsProvider = STSAssumeRoleSessionCredentialsProvider
-                .Builder(serverlessExecutorRoleArn, sessionName)
-                .build()
+        val credentialsProvider = getCredentials(
+                "${serverlessExecutorParameterPath(env.get("ENVIRONMENT"))}/${checkMsg.executor}",
+                "${serverlessExecutor::class.java.simpleName}-${env.get("ENVIRONMENT")}")
 
         // Execute the check.
         val executedAt = ZonedDateTime.now()
         val result: Result = try {
-            serverlessExecutor.execute(check, context, credentialsProvider)
+            serverlessExecutor.run(check, context, credentialsProvider)
         } catch (e: Exception) {
             val errorMsg = "Error running serverless check:  ${checkMsg.executor}\n${e.message}"
             log.error(errorMsg)
