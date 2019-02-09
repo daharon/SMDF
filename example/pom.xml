@@ -34,6 +34,12 @@
             <artifactId>aws-java-sdk-iam</artifactId>
             <version>1.11.490</version>
         </dependency>
+        <!-- Used by a notification handler -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-ses</artifactId>
+            <version>1.11.490</version>
+        </dependency>
 
     </dependencies>
 

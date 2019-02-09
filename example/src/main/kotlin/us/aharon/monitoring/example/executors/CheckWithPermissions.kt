@@ -28,6 +28,9 @@ class CheckWithPermissions : ServerlessExecutor() {
                 .build()
         val iamUsers = iamClient.listUsers().users
         ctx.logger.log("Found the following users:  $iamUsers")
+        if (iamUsers.size > 10) {
+            return Critical("CRITICAL - ${iamUsers.size} users is too many!")
+        }
         return Ok("OK - ${iamUsers.map { it.userName }}")
     }
 }
