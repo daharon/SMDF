@@ -11,10 +11,10 @@ import kotlin.reflect.full.primaryConstructor
 
 
 @DslMarker
+@Target(AnnotationTarget.FUNCTION)
 annotation class CheckDslMarker
 
 
-@CheckDslMarker
 class CheckGroup(val name: String) {
 
     val checks: MutableList<Check> = mutableListOf()

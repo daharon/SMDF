@@ -9,7 +9,6 @@ import kotlin.reflect.KClass
 import us.aharon.monitoring.core.handlers.NotificationHandler
 
 
-@CheckDslMarker
 interface Check {
 
     val name: String
