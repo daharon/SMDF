@@ -16,11 +16,13 @@ import us.aharon.monitoring.example.handlers.DefaultHandler
 val defaultClientCheck = clientCheckTemplate {
     interval = 5
     handlers = listOf(DefaultHandler::class)
-    subscribers = listOf("linux")
+    tags = listOf("linux")
     contacts = listOf("devops")
     timeout = 30
     ttl = 90
     occurrences = 1
+    onlyIf = { true }
+    notIf = { false }
 }
 
 /**
@@ -29,5 +31,6 @@ val defaultClientCheck = clientCheckTemplate {
 val defaultServerlessCheck = serverlessCheckTemplate {
     interval = 15
     timeout = 300  // Five minutes.
+    onlyIf = { true }
 }
 

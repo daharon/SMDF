@@ -37,8 +37,8 @@ class Messages : KoinTest {
                     name = "test-check",
                     timeout = 60,
                     command = "true",
-                    subscribers = listOf())
-            val expectedMsg = "{\"scheduledAt\":\"$TIMESTAMP\",\"group\":\"test\",\"name\":\"test-check\",\"command\":\"true\",\"timeout\":60,\"subscribers\":[]}"
+                    tags = listOf())
+            val expectedMsg = "{\"scheduledAt\":\"$TIMESTAMP\",\"group\":\"test\",\"name\":\"test-check\",\"command\":\"true\",\"timeout\":60,\"tags\":[]}"
 
             val jsonMessage = json.writeValueAsString(testMsg)
             assertEquals(expectedMsg, jsonMessage)

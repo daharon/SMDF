@@ -4,9 +4,9 @@
 
 package us.aharon.monitoring.core.checks
 
-import kotlin.reflect.KClass
-
 import us.aharon.monitoring.core.handlers.NotificationHandler
+
+import kotlin.reflect.KClass
 
 
 interface Check {
@@ -18,6 +18,7 @@ interface Check {
     var interval: Int
     var notification: String
     var handlers: List<KClass<out NotificationHandler>>
+    // TODO:  Implement flapping detection.
     var highFlapThreshold: Int
     var lowFlapThreshold: Int
     var additional: Map<String, String?>
@@ -27,17 +28,19 @@ interface Check {
      */
     var timeout: Int
     /**
-     * Resolve the check state automatically on a state transition of WARNING/CRITICAL to OK.
-     * Non-MVP feature.
-     */
-    var autoResolve: Boolean
-    /**
      * Fire the notification handlers after N consecutive occurrences in a non-OK state.
+     * Not yet implemented.
      */
+    // TODO:  Implement occurrences notification handling.
     var occurrences: Int
     /**
-     * Do not perform the check during the provided time-frame.
-     * TODO: Come up with a data structure for this.
+     * Perform check only if the given function evaluates to `true`.
+     * eg. Perform the check only during a given time-frame.
      */
-    var subdue: String
+    var onlyIf: () -> Boolean
+    /**
+     * Perform check only if the given function evaluates to `false`.
+     * eg. Perform the check only during a given time-frame.
+     */
+    var notIf: () -> Boolean
 }

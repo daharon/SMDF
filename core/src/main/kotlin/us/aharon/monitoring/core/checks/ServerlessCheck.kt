@@ -23,12 +23,13 @@ class ServerlessCheck(override val name: String) : Check {
     override var additional: Map<String, String?> = emptyMap()
     override var contacts: List<String> = emptyList()
     override var timeout: Int = 30
-    override var autoResolve: Boolean = true
     override var occurrences: Int = 1
-    override var subdue: String = ""
+    override var onlyIf: () -> Boolean = { true }
+    override var notIf: () -> Boolean = { false }
 
     /**
      * ServerlessCheck class to run.
+     * An implementation of the [ServerlessExecutor] abstract class.
      */
     var executor: KClass<out ServerlessExecutor> = FailServerlessExecutor::class
 }

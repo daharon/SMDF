@@ -44,11 +44,11 @@ internal class CheckScheduler : KoinComponent {
     }
 
     /**
-     * Iterate through the [us.aharon.monitoring.core.Application]'s configured checks/check-groups
+     * Iterate through the [us.aharon.monitoring.core.api.Application]'s configured checks/check-groups
      * and push those that should be run now to the fanout queue to be executed.
      *
      * @param time The time provided by the [ScheduledEvent].
-     * @param checks The [us.aharon.monitoring.core.Application]'s configured checks.
+     * @param checks The [us.aharon.monitoring.core.api.Application]'s configured checks.
      */
     fun run(time: DateTime, checks: List<CheckGroup>) {
         // Get the scheduled event time from the event object in minutes since the epoch.
@@ -62,7 +62,7 @@ internal class CheckScheduler : KoinComponent {
             }.mapNotNull<Check, CheckMessage> {
                 when (it) {
                     is ClientCheck -> ClientCheckMessage(
-                            ZonedDateTime.now(), checkGroup.name, it.name, it.command, it.timeout, it.subscribers)
+                            ZonedDateTime.now(), checkGroup.name, it.name, it.command, it.timeout, it.tags)
                     is ServerlessCheck -> ServerlessCheckMessage(
                             ZonedDateTime.now(), checkGroup.name, it.name, it.executor.java.canonicalName, it.timeout)
                     else -> {
@@ -83,7 +83,7 @@ internal class CheckScheduler : KoinComponent {
         // Send the client check messages to the SNS topic.
         sendClientChecks(clientChecks)
 
-        // Send the serverless check messages to the SNS topic.
+        // Send the serverless check messages to the SQS queue.
         sendServerlessChecks(serverlessChecks)
     }
 
@@ -94,10 +94,11 @@ internal class CheckScheduler : KoinComponent {
      * @param check The [Check] to evaluate.
      * @return True if the [Check] should be scheduled now, false otherwise.
      */
-    private fun scheduleCheck(minutes: Long, check: Check): Boolean {
-        // TODO:  Account for checks that should not run every day, or only run during certain periods of the day. See [Check.subdue].
-        return minutes % check.interval == 0L
-    }
+    private fun scheduleCheck(minutes: Long, check: Check): Boolean =
+            // TODO:  Account for checks that should not run every day.
+            minutes % check.interval == 0L
+                    && check.onlyIf()
+                    && !check.notIf()
 
     /**
      * Publish the scheduled client checks to the SNS fanout topic.
@@ -114,7 +115,7 @@ internal class CheckScheduler : KoinComponent {
                         mapOf(
                                 SNS_MESSAGE_ATTRIBUTE_TAGS to MessageAttributeValue()
                                         .withDataType("String.Array")
-                                        .withStringValue(check.subscribers.joinToSNSMessageAttributeStringValue())
+                                        .withStringValue(check.tags.joinToSNSMessageAttributeStringValue())
                         )
                 )
         log.info { "SNS publish request:\n$publishReq" }
@@ -123,7 +124,7 @@ internal class CheckScheduler : KoinComponent {
     }
 
     /**
-     * Publish the scheduled serverless checks to the SNS fanout topic.
+     * Publish the scheduled serverless checks to the SQS queue.
      *
      * @param serverlessChecks The [ServerlessCheckMessage]'s that have been scheduled.
      */

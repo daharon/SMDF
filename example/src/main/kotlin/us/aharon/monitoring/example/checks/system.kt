@@ -24,7 +24,7 @@ val SYSTEM_CHECKS = checks("system") {
      */
     check("CPU") {
         command = "/usr/lib64/nagios/plugins/check_cpu --warning 75 --critical 85"
-        subscribers = listOf("linux")
+        tags = listOf("linux")
         interval = 1 // Minutes
         handlers = listOf(DefaultHandler::class)
         highFlapThreshold = 10
@@ -35,11 +35,9 @@ val SYSTEM_CHECKS = checks("system") {
         )
         contacts = listOf("devops")
         volatile = false
-        timeout = 30 // Seconds.  Not sure if this is necessary.
+        timeout = 30 // Seconds.
         ttl = 90 // Seconds.
-        autoResolve = true  // Non-MVP feature.
         occurrences = 1
-        subdue = ""  // A set time period to dis-able this check.
     }
 
     /**

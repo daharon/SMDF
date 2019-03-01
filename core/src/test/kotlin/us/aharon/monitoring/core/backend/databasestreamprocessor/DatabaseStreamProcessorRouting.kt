@@ -52,7 +52,7 @@ class DatabaseStreamProcessorRouting {
         private val testChecks = listOf(checks("test") {
             check("test-check") {
                 command = "true"
-                subscribers = listOf("linux")
+                tags = listOf("linux")
                 handlers = listOf(TestNotificationHandler::class)
                 notification = "CPU usage is high"
                 contacts = listOf("devops")

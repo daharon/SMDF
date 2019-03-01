@@ -9,13 +9,16 @@ import java.time.ZonedDateTime
 
 internal sealed class CheckMessage
 
+/**
+ * Check message sent to the remote client process.
+ */
 internal data class ClientCheckMessage(
         val scheduledAt: ZonedDateTime,
         val group: String,
         val name: String,
         val command: String,
         val timeout: Int,
-        val subscribers: List<String>
+        val tags: List<String>
 ) : CheckMessage()
 
 /**

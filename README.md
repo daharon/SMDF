@@ -356,3 +356,7 @@ Stack `mon-dev` status:  CREATE_COMPLETE
 - [ ] Add web UI.
 - [ ] Support for AWS credential profiles (`~/.aws/credentials`) for CLI deployment.
 - [ ] Implement check timeouts.
+- [ ] Implement flapping detection.
+- [ ] Implement occurrences notification handling.
+- [ ] Implement `volatile` checks.
+    - Checks which are not scheduled by the backend, but instead reported asynchronously by the client.

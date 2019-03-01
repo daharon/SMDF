@@ -4,9 +4,9 @@
 
 package us.aharon.monitoring.core.checks
 
-import kotlin.reflect.KClass
-
 import us.aharon.monitoring.core.handlers.NotificationHandler
+
+import kotlin.reflect.KClass
 
 
 /**
@@ -23,9 +23,10 @@ class ClientCheck(override val name: String) : Check {
     override var additional: Map<String, String?> = emptyMap()
     override var contacts: List<String> = emptyList()
     override var timeout: Int = 30
-    override var autoResolve: Boolean = true
     override var occurrences: Int = 1
-    override var subdue: String = ""
+    override var onlyIf: () -> Boolean = { true }
+    override var notIf: () -> Boolean = { false }
+
     /**
      * Check command to run.
      * Default value forces a CRITICAL state.
@@ -34,14 +35,16 @@ class ClientCheck(override val name: String) : Check {
     /**
      * Tags used to route checks to the appropriate clients.
      */
-    var subscribers: List<String> = emptyList()
+    var tags: List<String> = emptyList()
     /**
      * This check is not triggered by the monitoring application.
      * The check results are reported asynchronously.
      */
+    // TODO:  Implement volatile checks.
     var volatile: Boolean = false
     /**
      * Time to live in seconds before the check is automatically deleted from the queue.
+     * Default is double the check `interval` time.
      */
-    var ttl: Int = 90
+    var ttl: Int = interval * 2 + 1
 }

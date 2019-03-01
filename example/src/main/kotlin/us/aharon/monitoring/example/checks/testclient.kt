@@ -23,7 +23,7 @@ val TEST_CLIENT_CHECKS = checks("test") {
 
         defaultClientCheck(name) {
             command     = chk
-            subscribers = listOf("test-client")
+            tags        = listOf("test-client")
             interval    = 2
             handlers    += PermissionsNotificationHandler::class
         }
