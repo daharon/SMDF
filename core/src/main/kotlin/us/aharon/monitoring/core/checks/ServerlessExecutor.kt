@@ -27,7 +27,7 @@ data class Critical(override val output: String) : Result() {
     override val status = CheckResultStatus.CRITICAL
 }
 data class Unknown(override val output: String) : Result() {
-    override val status = CheckResultStatus.WARNING
+    override val status = CheckResultStatus.UNKNOWN
 }
 
 

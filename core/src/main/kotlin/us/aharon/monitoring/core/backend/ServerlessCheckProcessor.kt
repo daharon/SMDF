@@ -20,7 +20,9 @@ import us.aharon.monitoring.core.checks.*
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.util.Env
 
+import java.time.Duration
 import java.time.ZonedDateTime
+import java.util.concurrent.*
 
 
 /**
@@ -37,6 +39,7 @@ internal class ServerlessCheckProcessor :
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
     private val json: ObjectMapper by inject()
     private val sqs: AmazonSQS by inject()
+    private val threadExecutor = Executors.newSingleThreadExecutor()
 
     private val CHECK_RESULT_QUEUE by lazy { env.get("CHECK_RESULTS_QUEUE") }
 
@@ -45,6 +48,7 @@ internal class ServerlessCheckProcessor :
         val checkMsg = json.readValue<ServerlessCheckMessage>(message.body)
         val check = checks.getCheck(checkMsg.group, checkMsg.name) as ServerlessCheck
         log.info("Running serverless check:  ${checkMsg.executor}")
+        log.debug("Check:  $check")
         // Create an instance of the executor given its fully qualified name.
         val serverlessExecutor = Class.forName(checkMsg.executor).newInstance() as ServerlessExecutor
 
@@ -54,8 +58,18 @@ internal class ServerlessCheckProcessor :
 
         // Execute the check.
         val executedAt = ZonedDateTime.now()
+        val job: Future<Result> = threadExecutor.submit(object : Callable<Result> {
+            override fun call(): Result =
+                    serverlessExecutor.run(check, context, credentialsProvider)
+        })
         val result: Result = try {
-            serverlessExecutor.run(check, context, credentialsProvider)
+            job.get(checkMsg.timeout.toLong(), TimeUnit.SECONDS)
+        } catch (e: TimeoutException) {
+            job.cancel(true)
+            val timeRan = Duration.between(executedAt, ZonedDateTime.now()).seconds
+            val errorMsg = "Serverless check timed out after $timeRan seconds:  ${checkMsg.executor}\n${e.message}"
+            log.error(errorMsg)
+            Unknown(output = errorMsg)
         } catch (e: Exception) {
             val errorMsg = "Error running serverless check:  ${checkMsg.executor}\n${e.message}"
             log.error(errorMsg)

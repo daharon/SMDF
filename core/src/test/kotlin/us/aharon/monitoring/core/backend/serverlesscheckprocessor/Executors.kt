@@ -9,6 +9,8 @@ import com.amazonaws.services.lambda.runtime.Context
 
 import us.aharon.monitoring.core.checks.*
 
+import java.util.concurrent.TimeUnit
+
 
 class OkExecutor : ServerlessExecutor() {
     override val permissions: List<Permission> = emptyList()
@@ -38,4 +40,15 @@ class ExceptionExecutor : ServerlessExecutor() {
     override val permissions: List<Permission> = emptyList()
     override fun run(check: ServerlessCheck, ctx: Context, credentials: AWSCredentialsProvider): Result =
             throw Exception("This check throws an exception")
+}
+
+/**
+ * A serverless check that takes too long to run.
+ */
+class TimeoutExecutor : ServerlessExecutor() {
+    override val permissions: List<Permission> = emptyList()
+    override fun run(check: ServerlessCheck, ctx: Context, credentials: AWSCredentialsProvider): Result {
+        TimeUnit.SECONDS.sleep(30)
+        return Ok(output = "Slept for 30 seconds.")
+    }
 }
