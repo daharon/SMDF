@@ -355,7 +355,7 @@ Stack `mon-dev` status:  CREATE_COMPLETE
     - External health check.
 - [ ] Add web UI.
 - [ ] Support for AWS credential profiles (`~/.aws/credentials`) for CLI deployment.
-- [ ] Implement check timeouts.
+- [x] Implement check timeouts.
 - [ ] Implement flapping detection.
 - [ ] Implement occurrences notification handling.
 - [ ] Implement `volatile` checks.
