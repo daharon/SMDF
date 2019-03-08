@@ -5,6 +5,9 @@
 package us.aharon.monitoring.core.backend.notificationprocessor
 
 import cloud.localstack.LocalstackExtension
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
+import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -20,10 +23,12 @@ import us.aharon.monitoring.core.common.TestLambdaContext
 import us.aharon.monitoring.core.common.TestNotificationHandler
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
+import us.aharon.monitoring.core.db.NotificationRecord
 import us.aharon.monitoring.core.extensions.DynamoDBTableExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
 
 import java.time.ZonedDateTime
+import kotlin.test.assertNotNull
 
 
 @Extensions(
@@ -66,5 +71,16 @@ class MinimalNotification : KoinTest {
     fun `Run simple notification handler`() {
         val context = TestLambdaContext("TestNotificationProcessor")
         NotificationProcessor().run(singleTestEvent, checks, context)
+
+        val db: DynamoDBMapper by inject()
+        val query = DynamoDBQueryExpression<NotificationRecord>()
+                .withKeyConditionExpression("#pk = :handlerId")
+                .withExpressionAttributeNames(mapOf("#pk" to "pk"))
+                .withExpressionAttributeValues(mapOf(
+                        ":handlerId" to AttributeValue(TestNotificationHandler::class.java.canonicalName)))
+                .withConsistentRead(true)
+                .withLimit(1)
+        val notification = db.query(NotificationRecord::class.java, query).firstOrNull()
+        assertNotNull(notification)
     }
 }

@@ -22,7 +22,7 @@ import kotlin.test.assertEquals
 private const val TIMESTAMP: String = "2018-08-23T11:39:44Z"
 
 
-class Messages : KoinTest {
+class MessagesTest : KoinTest {
 
     @Nested
     @ExtendWith(LoadModulesExtension::class)

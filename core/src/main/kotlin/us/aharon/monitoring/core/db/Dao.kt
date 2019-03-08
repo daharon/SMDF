@@ -37,7 +37,6 @@ internal class Dao : KoinComponent {
     fun saveClient(client: ClientRecord, description: String = "Client updated.") {
         val clientHistoryEntry = ClientHistoryRecord(
                 name = client.name,
-                timestamp = ZonedDateTime.now(),
                 description = description)
         db.batchSave(client, clientHistoryEntry)
     }

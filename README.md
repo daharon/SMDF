@@ -358,5 +358,6 @@ Stack `mon-dev` status:  CREATE_COMPLETE
 - [x] Implement check timeouts.
 - [ ] Implement flapping detection.
 - [ ] Implement occurrences notification handling.
+    - Only send notification if _x_ number of warning/critical/unknown have occurred in sequence.
 - [ ] Implement `volatile` checks.
     - Checks which are not scheduled by the backend, but instead reported asynchronously by the client.
