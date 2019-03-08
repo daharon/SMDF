@@ -19,10 +19,10 @@ import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 
 
-private const val TIMESTAMP: String = "2018-08-23T11:39:44Z"
-
-
 class MessagesTest : KoinTest {
+
+    private val TIMESTAMP: String = "2018-08-23T11:39:44Z"
+
 
     @Nested
     @ExtendWith(LoadModulesExtension::class)

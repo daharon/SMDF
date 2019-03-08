@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Daniel Aharon
+ * Copyright (c) 2019 Daniel Aharon
  */
 
 package us.aharon.monitoring.core.extensions
@@ -14,7 +14,7 @@ import org.koin.test.KoinTest
 import us.aharon.monitoring.core.util.Env
 
 
-class CheckResultsSqsQueueExtension : KoinTest,
+class NotificationSqsQueueExtension : KoinTest,
         BeforeTestExecutionCallback, AfterTestExecutionCallback {
 
     private val env: Env by inject()
@@ -22,10 +22,10 @@ class CheckResultsSqsQueueExtension : KoinTest,
 
 
     override fun beforeTestExecution(context: ExtensionContext) {
-        sqs.createQueue("CHECK_RESULTS_QUEUE")
+        sqs.createQueue("NOTIFICATION_QUEUE")
     }
 
     override fun afterTestExecution(context: ExtensionContext) {
-        sqs.deleteQueue(env.get("CHECK_RESULTS_QUEUE"))
+        sqs.deleteQueue(env.get("NOTIFICATION_QUEUE"))
     }
 }
