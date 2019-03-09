@@ -45,8 +45,8 @@ internal class DatabaseStreamProcessor : KoinComponent {
             when (dataField) {
                 ClientRecord.DATA_FIELD -> handleClientRecord(it)
                 CheckResultRecord.DATA_FIELD -> handleCheckResultRecord(it, checks)
-                ClientHistoryRecord.DATA_FIELD -> log.info("$dataField record:  Do nothing")
-                NotificationRecord.DATA_FIELD -> log.info("$dataField record:  Do nothing")
+                ClientHistoryRecord.DATA_FIELD -> log.debug { "$dataField record:  Do nothing" }
+                NotificationRecord.DATA_FIELD -> log.debug { "$dataField record:  Do nothing" }
                 else -> log.error("Unable to determine record type.")
             }
         }

@@ -51,11 +51,11 @@ internal class CheckResultProcessor : KoinComponent {
     fun run(record: DynamodbEvent.DynamodbStreamRecord, checks: List<CheckGroup>) {
         when (OperationType.fromValue(record.eventName)) {
             OperationType.INSERT -> {
-                log.info("Received INSERT event.")
+                log.debug { "Received INSERT event." }
                 val newCheckResultRecord = db.marshallCheckResultRecord(record.dynamodb.newImage)
                 val previousCheckResultRecord = db.previousCheckResultRecord(newCheckResultRecord)
                 val handlers = checks.getCheck(newCheckResultRecord.group!!, newCheckResultRecord.name!!).handlers
-                log.info("Previous record:  $previousCheckResultRecord")
+                log.debug { "Previous record:  $previousCheckResultRecord" }
 
                 when (previousCheckResultRecord) {
                     null -> {
@@ -65,15 +65,15 @@ internal class CheckResultProcessor : KoinComponent {
                         }
                     }
                     else -> {
-                        log.info("Previous status: ${previousCheckResultRecord.status}, New status: ${newCheckResultRecord.status}")
+                        log.debug { "Previous status: ${previousCheckResultRecord.status}, New status: ${newCheckResultRecord.status}" }
                         if (previousCheckResultRecord.status != newCheckResultRecord.status) {
                             sendToNotificationHandler(previousCheckResultRecord, newCheckResultRecord, handlers)
                         }
                     }
                 }
             }
-            OperationType.MODIFY -> log.info("Ignoring MODIFY event.")
-            OperationType.REMOVE -> log.info("Ignoring REMOVE event.")
+            OperationType.MODIFY -> log.debug { "Ignoring MODIFY event." }
+            OperationType.REMOVE -> log.debug { "Ignoring REMOVE event." }
             else -> log.error("Unknown event name provided:  ${record.eventName}")
         }
     }
@@ -82,7 +82,8 @@ internal class CheckResultProcessor : KoinComponent {
      * State change requires a notification.
      */
     private fun sendToNotificationHandler(old: CheckResultRecord?, new: CheckResultRecord, handlers: List<KClass<out NotificationHandler>>) {
-        log.info("State change from ${old?.status} to ${new.status}.")
+        log.info("Source: ${new.source}, Group: ${new.group}, Check: ${new.name}")
+        log.info("State change from ${old?.status ?: "N/A"} to ${new.status}.")
         handlers.forEach { handler ->
             val notificationEvent = NotificationEvent(
                     handler = handler.qualifiedName!!,
@@ -93,7 +94,7 @@ internal class CheckResultProcessor : KoinComponent {
                     .withQueueUrl(NOTIFICATION_QUEUE)
                     .withMessageBody(message)
             val result = sqs.sendMessage(req)
-            log.info("Sent message to notification queue:  ${result.messageId}")
+            log.debug { "Sent message to notification queue:  ${result.messageId}" }
         }
     }
 }

@@ -53,7 +53,7 @@ internal class CheckScheduler : KoinComponent {
     fun run(time: DateTime, checks: List<CheckGroup>) {
         // Get the scheduled event time from the event object in minutes since the epoch.
         val minutes = TimeUnit.MILLISECONDS.toMinutes(time.millis)
-        log.info { "$minutes minutes since the epoch." }
+        log.debug { "$minutes minutes since the epoch." }
 
         // Iterate through the checks and determine which should be scheduled now.
         val scheduleChecks: List<CheckMessage> = checks.map { checkGroup ->
@@ -72,7 +72,7 @@ internal class CheckScheduler : KoinComponent {
                 }
             }
         }.flatten()
-        log.info { "Scheduling the following checks:  $scheduleChecks" }
+        log.info("Scheduling the following checks:  $scheduleChecks")
 
         // Construct the check objects to send to the SNS topic.
         val clientChecks: List<ClientCheckMessage> = scheduleChecks
@@ -118,9 +118,9 @@ internal class CheckScheduler : KoinComponent {
                                         .withStringValue(check.tags.joinToSNSMessageAttributeStringValue())
                         )
                 )
-        log.info { "SNS publish request:\n$publishReq" }
+        log.debug { "SNS publish request:\n$publishReq" }
         val result = snsClient.publish(publishReq)
-        log.info { "Published message ID:  ${result.messageId}" }
+        log.debug { "Published message ID:  ${result.messageId}" }
     }
 
     /**
@@ -133,8 +133,8 @@ internal class CheckScheduler : KoinComponent {
         val req = SendMessageRequest()
                 .withQueueUrl(SQS_SERVERLESS_CHECK_QUEUE)
                 .withMessageBody(jsonMessage)
-        log.info { "SQS send request:\n$req" }
+        log.debug { "SQS send request:\n$req" }
         val result = sqs.sendMessage(req)
-        log.info("Sent message to serverless check processor queue:  ${result.messageId}")
+        log.debug { "Sent message to serverless check processor queue:  ${result.messageId}" }
     }
 }

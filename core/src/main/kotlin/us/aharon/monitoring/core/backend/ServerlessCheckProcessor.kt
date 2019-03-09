@@ -41,14 +41,14 @@ internal class ServerlessCheckProcessor :
     private val sqs: AmazonSQS by inject()
     private val threadExecutor = Executors.newSingleThreadExecutor()
 
-    private val CHECK_RESULT_QUEUE by lazy { env.get("CHECK_RESULTS_QUEUE") }
+    private val CHECK_RESULTS_QUEUE by lazy { env.get("CHECK_RESULTS_QUEUE") }
 
 
     fun run(event: SQSEvent, checks: List<CheckGroup>, context: Context) = event.records.forEach { message ->
         val checkMsg = json.readValue<ServerlessCheckMessage>(message.body)
         val check = checks.getCheck(checkMsg.group, checkMsg.name) as ServerlessCheck
         log.info("Running serverless check:  ${checkMsg.executor}")
-        log.debug("Check:  $check")
+        log.debug { "Check:  $check" }
         // Create an instance of the executor given its fully qualified name.
         val serverlessExecutor = Class.forName(checkMsg.executor).newInstance() as ServerlessExecutor
 
@@ -87,8 +87,8 @@ internal class ServerlessCheckProcessor :
                 status = result.status,
                 output = result.output
         ))
-        val req = SendMessageRequest(CHECK_RESULT_QUEUE, resultMessage)
+        val req = SendMessageRequest(CHECK_RESULTS_QUEUE, resultMessage)
         val sendMessageResult = sqs.sendMessage(req)
-        log.info { "Sent result message to message queue:  $sendMessageResult" }
+        log.debug { "Sent result message to message queue:  $sendMessageResult" }
     }
 }

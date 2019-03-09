@@ -71,6 +71,12 @@ internal class Deploy : Runnable {
             required = true)
     private lateinit var environment: String
 
+    @Option(names = ["-l", "--log-level"],
+            paramLabel = "LEVEL",
+            description = ["Log level (TRACE, DEBUG, ERROR, WARN, INFO)"],
+            required = false)
+    private var logLevel: String = "INFO"
+
     companion object {
         /**
          * CloudFormation template filename from the package's resources directory.
@@ -233,6 +239,7 @@ internal class Deploy : Runnable {
         val templateCfn = templateConfig.getTemplate(CLOUDFORMATION_TEMPLATE)
         val templateData = mapOf<String, Any>(
                 "environment" to environment,
+                "logLevel" to logLevel.toUpperCase(),
                 // Code
                 "codeS3Bucket" to s3Dest.bucket,
                 "codeS3Key" to "${s3Dest.path}/${getJarFilename(parent.app::class)}",

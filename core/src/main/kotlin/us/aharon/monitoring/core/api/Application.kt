@@ -82,7 +82,7 @@ abstract class Application : KoinComponent {
      *   deal with any cleanup that is necessary.
      */
     fun clientRegistration(event: ClientRegistrationRequest, context: Context): ClientRegistrationResponse {
-        log.info("Received event:  $event")
+        log.debug { "Received event:  $event" }
         return this._clientRegistration.run(event)
     }
 
@@ -95,10 +95,7 @@ abstract class Application : KoinComponent {
      * Requires the ARN of the SNS Check Fanout topic.
      */
     fun checkScheduler(event: ScheduledEvent, context: Context) {
-        log.info { "Event Time:  ${event.time}" }
-        log.info { "Detail Type:  ${event.detailType}" }
-        log.info { "Detail:  ${event.detail}" }
-        log.info { "Resources:  ${event.resources}" }
+        log.debug { "Received event:  $event" }
         this._checkScheduler.run(event.time, this.checks)
     }
 
@@ -106,8 +103,10 @@ abstract class Application : KoinComponent {
      * Receive scheduled check results and save to database.
      */
     fun checkResultReceiver(event: SQSEvent, context: Context) {
-        log.info("Received ${event.records.size} SQS messages.")
-        event.records.forEach { log.info("Message body:  ${it.body}") }
+        log.debug { "Received ${event.records.size} SQS messages." }
+        if (log.isDebugEnabled) {
+            event.records.forEach { log.debug("Message body:  ${it.body}") }
+        }
         this._checkResultReceiver.run(event)
     }
 
@@ -118,7 +117,7 @@ abstract class Application : KoinComponent {
      * - Process client changes.
      */
     fun databaseStreamProcessor(event: DynamodbEvent, context: Context) {
-        log.info("DynamoDB stream event: $event")
+        log.debug { "DynamoDB stream event: $event" }
         this._databaseStreamProcessor.run(event, checks)
     }
 
@@ -128,7 +127,9 @@ abstract class Application : KoinComponent {
      * - Apply the application defined Filters and Mutators before forwarding to the notification handler.
      */
     fun notificationProcessor(event: SQSEvent, context: Context) {
-        event.records.forEach { log.info("Message body:  ${it.body}") }
+        if (log.isDebugEnabled) {
+            event.records.forEach { log.debug("Message body:  ${it.body}") }
+        }
         this._notificationProcessor.run(event, checks, context)
     }
 
@@ -136,7 +137,9 @@ abstract class Application : KoinComponent {
      * Run the specified serverless check.
      */
     fun serverlessCheckProcessor(event: SQSEvent, context: Context) {
-        event.records.forEach { log.info("Message body:  ${it.body}") }
+        if (log.isDebugEnabled) {
+            event.records.forEach { log.debug("Message body:  ${it.body}") }
+        }
         this._serverlessCheckProcessor.run(event, checks, context)
     }
 }

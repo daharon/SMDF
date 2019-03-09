@@ -21,6 +21,7 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
           DB_TABLE: !Ref MonitoringTable
@@ -45,6 +46,7 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
           DB_TABLE: !Ref MonitoringTable
           NOTIFICATION_QUEUE: !Ref MonitoringNotificationQueue
@@ -68,6 +70,7 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
           CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
           SERVERLESS_CHECK_QUEUE: !Ref MonitoringServerlessCheckQueue
@@ -91,6 +94,7 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
           DB_TABLE: !Ref MonitoringTable
       Tags:
@@ -115,6 +119,7 @@ Resources:
       MemorySize: 3008
       Environment:
         Variables:
+          LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
           DB_TABLE: !Ref MonitoringTable
       Tags:
@@ -139,6 +144,7 @@ Resources:
       MemorySize: 3008
       Environment:
         Variables:
+          LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
           CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultQueue
       Tags:

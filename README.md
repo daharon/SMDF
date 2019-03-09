@@ -320,13 +320,13 @@ Stack `mon-dev` status:  CREATE_COMPLETE
 ```
 
 ## TODO
-- [ ] Enable log-level control.
-    - Move the verbose logging to the DEBUG log level.
-- [ ] Add `heartbeat` check.
+- [x] Log-level control.
+    - Move the verbose logging to the `DEBUG` log level.
+- [ ] _Heartbeat_ check.
     - May run separate from the regular check-scheduler.
     - Send a "heartbeat" message to all clients.
     - Record the last heartbeat in the database under the Client's metadata.
-- [ ] Add IAM Policy and Role for clients.
+- [ ] IAM Policy and Role for clients.
     - Read from the Parameter Store value for registration.
     - Invoke the registration Lambda function.
     - Read/delete from the client's check queue.
@@ -335,7 +335,7 @@ Stack `mon-dev` status:  CREATE_COMPLETE
 - [x] Refactor DynamoDB tables into single table.
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html?shortFooter=true
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html
-- [ ] Refactor DSL to use Builder Pattern and `@DslMarker` annotation correctly.
+- [ ] Refactor DSL to use Builder Pattern and `@DslMarker` annotation better.
     - https://kotlinlang.org/docs/reference/type-safe-builders.html#scope-control-dslmarker-since-11
     - https://proandroiddev.com/writing-kotlin-dsls-with-nested-builder-pattern-66452476d5ef
     - https://youtu.be/Rvx_BfG3NDo?t=2090
@@ -348,12 +348,14 @@ Stack `mon-dev` status:  CREATE_COMPLETE
 - [x] Refactor logging to use a different backend.
     - Lambda cold-start time may be improved by using `tinylog` or `logback`.
 - [ ] Change check notification handlers from a `List` to a `Set`.
-- [ ] Add VPC support.
+    - Will this result in an inferior experience, as the user must remember to use `listOf()` for some values and `setOf()` for others?
+- [ ] VPC support.
+    - Probably only the notification handlers and serverless checks will need to run within the VPC.
 - [ ] CloudWatch alarm for Lambda errors.
-- [ ] Add HTTP API.
+- [ ] HTTP API.
     - Deleting/disabling clients.
     - External health check.
-- [ ] Add web UI.
+- [ ] Web UI.
 - [ ] Support for AWS credential profiles (`~/.aws/credentials`) for CLI deployment.
 - [x] Implement check timeouts.
 - [ ] Implement flapping detection.

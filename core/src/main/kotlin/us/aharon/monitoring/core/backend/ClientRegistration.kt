@@ -93,7 +93,7 @@ class ClientRegistration : KoinComponent {
                             queueUrl = qns.queueUrl,
                             subscriptionArn = qns.subscriptionArn)
                     db.saveClient(clientRecord, "Updated client with tags ${clientRecord.tags}.")
-                    log.info("Saved client to database:  $clientRecord")
+                    log.debug { "Saved client to database:  $clientRecord" }
                     ClientRegistrationResponse(
                             commandQueue = qns.queueUrl,
                             resultQueue = SQS_CLIENT_RESULTS_QUEUE)
@@ -105,7 +105,7 @@ class ClientRegistration : KoinComponent {
             }
             else -> {
                 // New client.
-                log.info("New client.")
+                log.debug { "New client." }
                 val qns = createQueueAndSubscription(event.name, event.tags)
                 // Write client to database.
                 val clientRecord = ClientRecord(
@@ -115,7 +115,7 @@ class ClientRegistration : KoinComponent {
                         queueUrl = qns.queueUrl,
                         subscriptionArn = qns.subscriptionArn)
                 db.saveClient(clientRecord, "Created client with tags ${clientRecord.tags}.")
-                log.info("Saved client to database:  $clientRecord")
+                log.debug { "Saved client to database:  $clientRecord" }
 
                 ClientRegistrationResponse(
                         commandQueue = qns.queueUrl,
@@ -134,7 +134,7 @@ class ClientRegistration : KoinComponent {
     private fun createQueueAndSubscription(name: String?, tags: List<String>?): NewQueueAndSubscription {
         // Create queue.
         val queueName = "monitoring-$ENVIRONMENT-${UUID.randomUUID()}"
-        log.info("Generated queue name:  $queueName")
+        log.debug { "Generated queue name:  $queueName" }
         val queueRequest = CreateQueueRequest(queueName)
                 .withAttributes(mapOf("MessageRetentionPeriod" to MESSAGE_RETENTION_PERIOD.toString()))
         val queueResult = sqs.createQueue(queueRequest)
@@ -156,7 +156,7 @@ class ClientRegistration : KoinComponent {
                         "Policy" to generateQueuePermissionPolicy(queueArn!!, SNS_CLIENT_CHECK_TOPIC_ARN)
                 ))
         sqs.setQueueAttributes(queuePermRequest)
-        log.info("Set permission policy for queue.")
+        log.debug { "Set permission policy for queue." }
 
         // Subscribe queue to SNS Topic.
         val subscribeRequest = SubscribeRequest()
