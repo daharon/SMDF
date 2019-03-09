@@ -2,7 +2,7 @@
  * Copyright (c) 2018 Daniel Aharon
  */
 
-package us.aharon.monitoring.core.backend.checkresultreceiver
+package us.aharon.monitoring.core.backend
 
 import cloud.localstack.LocalstackExtension
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.Extensions
 import org.koin.standalone.inject
 import org.koin.test.KoinTest
 
-import us.aharon.monitoring.core.backend.CheckResultReceiver
 import us.aharon.monitoring.core.common.SQSTestEvent
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
@@ -30,7 +29,7 @@ import kotlin.test.assertEquals
     ExtendWith(LocalstackExtension::class),
     ExtendWith(LoadModulesExtension::class),
     ExtendWith(DynamoDBTableExtension::class))
-class CheckResultsReceived : KoinTest {
+class CheckResultReceiverTest : KoinTest {
 
     private val db: DynamoDBMapper by inject()
     private val singleTestEvent = SQSTestEvent(listOf(

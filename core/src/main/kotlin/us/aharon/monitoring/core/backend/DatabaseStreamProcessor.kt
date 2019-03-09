@@ -14,7 +14,9 @@ import org.koin.standalone.inject
 
 import us.aharon.monitoring.core.checks.CheckGroup
 import us.aharon.monitoring.core.db.CheckResultRecord
+import us.aharon.monitoring.core.db.ClientHistoryRecord
 import us.aharon.monitoring.core.db.ClientRecord
+import us.aharon.monitoring.core.db.NotificationRecord
 
 
 /**
@@ -43,6 +45,8 @@ internal class DatabaseStreamProcessor : KoinComponent {
             when (dataField) {
                 ClientRecord.DATA_FIELD -> handleClientRecord(it)
                 CheckResultRecord.DATA_FIELD -> handleCheckResultRecord(it, checks)
+                ClientHistoryRecord.DATA_FIELD -> log.info("$dataField record:  Do nothing")
+                NotificationRecord.DATA_FIELD -> log.info("$dataField record:  Do nothing")
                 else -> log.error("Unable to determine record type.")
             }
         }

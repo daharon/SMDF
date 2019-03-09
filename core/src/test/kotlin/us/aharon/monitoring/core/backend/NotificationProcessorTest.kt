@@ -2,13 +2,12 @@
  * Copyright (c) 2018 Daniel Aharon
  */
 
-package us.aharon.monitoring.core.backend.notificationprocessor
+package us.aharon.monitoring.core.backend
 
 import cloud.localstack.LocalstackExtension
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.Extensions
@@ -17,7 +16,6 @@ import org.koin.test.KoinTest
 
 import us.aharon.monitoring.core.api.checks
 import us.aharon.monitoring.core.api.check
-import us.aharon.monitoring.core.backend.NotificationProcessor
 import us.aharon.monitoring.core.common.SQSTestEvent
 import us.aharon.monitoring.core.common.TestLambdaContext
 import us.aharon.monitoring.core.common.TestNotificationHandler
@@ -35,9 +33,8 @@ import kotlin.test.assertNotNull
     ExtendWith(LocalstackExtension::class),
     ExtendWith(LoadModulesExtension::class),
     ExtendWith(DynamoDBTableExtension::class))
-class MinimalNotification : KoinTest {
+class NotificationProcessorTest : KoinTest {
 
-    private val json: ObjectMapper by inject()
     private val checks = listOf(checks("test") {
         check("test-check") {
             command = "true"
@@ -68,7 +65,7 @@ class MinimalNotification : KoinTest {
 
 
     @Test
-    fun `Run simple notification handler`() {
+    fun `Run test notification handler`() {
         val context = TestLambdaContext("TestNotificationProcessor")
         NotificationProcessor().run(singleTestEvent, checks, context)
 

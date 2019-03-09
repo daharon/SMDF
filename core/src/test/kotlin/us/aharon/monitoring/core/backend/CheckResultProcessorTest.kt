@@ -1,8 +1,4 @@
 /*
- * Copyright (c) 2019 Daniel Aharon
- */
-
-/*
  * Copyright (c) 2018 Daniel Aharon
  */
 
