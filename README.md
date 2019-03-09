@@ -345,7 +345,7 @@ Stack `mon-dev` status:  CREATE_COMPLETE
     - Assume the appropriate IAM Role in the `NotificationProcessor`.
 - [x] Create IAM Role with the specified policies for the `ServerlessExecutor` abstract base class.    
     - Assume the appropriate IAM Role in the `ServerlessCheckProcessor`.
-- [ ] Refactor logging to use a different backend.
+- [x] Refactor logging to use a different backend.
     - Lambda cold-start time may be improved by using `tinylog` or `logback`.
 - [ ] Change check notification handlers from a `List` to a `Set`.
 - [ ] Add VPC support.

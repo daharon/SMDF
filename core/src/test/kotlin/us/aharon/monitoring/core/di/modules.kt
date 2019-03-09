@@ -12,7 +12,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementAsyncClientBuilder
+import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementClientBuilder
 import com.amazonaws.services.simplesystemsmanagement.model.GetParameterResult
 import com.amazonaws.services.simplesystemsmanagement.model.Parameter
 import com.amazonaws.services.sns.AmazonSNS
@@ -50,7 +50,7 @@ private const val LOCALSTACK_DYNAMODB_PORT = 4569
  */
 internal val modules = module {
     single<Env> { Env(TEST_ENVIRONMENT_VARIABLES) }
-    single<KLogger> { (name: String) -> KotlinLogging.logger(name) }
+    factory<KLogger> { (name: String) -> KotlinLogging.logger(name) }
     single<ObjectMapper> {
         ObjectMapper()
                 .registerModule(JavaTimeModule())
@@ -118,7 +118,7 @@ private fun mockedAmazonSNS(): AmazonSNS {
  */
 private fun mockedAWSSimpleSystemsManagement(): AWSSimpleSystemsManagement {
     val ssm: AWSSimpleSystemsManagement = spyk(
-            AWSSimpleSystemsManagementAsyncClientBuilder.defaultClient())
+            AWSSimpleSystemsManagementClientBuilder.defaultClient())
     every { ssm.getParameter(any()) } returns GetParameterResult().withParameter(Parameter().withValue(""))
     return ssm
 }

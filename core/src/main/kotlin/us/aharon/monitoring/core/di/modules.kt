@@ -8,7 +8,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementAsyncClientBuilder
+import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementClientBuilder
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.AmazonSNSClientBuilder
 import com.amazonaws.services.sqs.AmazonSQS
@@ -28,7 +28,7 @@ import us.aharon.monitoring.core.util.Env
 
 internal val modules = module {
     single<Env> { Env() }
-    single<KLogger> { (name: String) -> KotlinLogging.logger(name) }
+    factory<KLogger> { (name: String) -> KotlinLogging.logger(name) }
     single<AmazonSNS> { AmazonSNSClientBuilder.standard().build() }
     single<ObjectMapper> {
         ObjectMapper()
@@ -46,7 +46,7 @@ internal val modules = module {
         DynamoDBMapper(client, config)
     }
     single<AmazonSQS> { AmazonSQSClientBuilder.standard().build() }
-    single<AWSSimpleSystemsManagement> { AWSSimpleSystemsManagementAsyncClientBuilder.defaultClient() }
+    single<AWSSimpleSystemsManagement> { AWSSimpleSystemsManagementClientBuilder.defaultClient() }
     single<Dao> { Dao() }
 }
 
