@@ -184,14 +184,14 @@ internal class Deploy : Runnable {
             val updateRequest = UpdateStackRequest()
                     .withStackName(stackName)
                     .withTemplateURL(templateUrl)
-                    .withCapabilities(Capability.CAPABILITY_IAM)
+                    .withCapabilities(Capability.CAPABILITY_IAM, Capability.CAPABILITY_NAMED_IAM)
             println("Updating the stack named `$stackName`...")
             cfnClient.updateStack(updateRequest)
         } else {
             val createRequest = CreateStackRequest()
                     .withStackName(stackName)
                     .withTemplateURL(templateUrl)
-                    .withCapabilities(Capability.CAPABILITY_IAM)
+                    .withCapabilities(Capability.CAPABILITY_IAM, Capability.CAPABILITY_NAMED_IAM)
             println("Creating the stack named `$stackName`...")
             cfnClient.createStack(createRequest)
         }

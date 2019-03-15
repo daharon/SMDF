@@ -320,18 +320,27 @@ Stack `mon-dev` status:  CREATE_COMPLETE
 ```
 
 ## TODO
-- [x] Log-level control.
-    - Move the verbose logging to the `DEBUG` log level.
-- [ ] _Heartbeat_ check.
-    - May run separate from the regular check-scheduler.
-    - Send a "heartbeat" message to all clients.
-    - Record the last heartbeat in the database under the Client's metadata.
-- [ ] IAM Policy and Role for clients.
+- [ ] Support for AWS credential profiles (`~/.aws/credentials`) for CLI deployment.
+- [x] IAM Policy and Role for clients.
     - Read from the Parameter Store value for registration.
     - Invoke the registration Lambda function.
     - Read/delete from the client's check queue.
     - Write to the result queue.
     - The Policy and Role should have fixed names.
+- [ ] Implement `occurrences` notification handling.
+    - Only send notification if _x_ number of warning/critical/unknown have occurred in sequence.
+- [ ] VPC support.
+    - Probably only the notification handlers and serverless checks will need to run within the VPC.
+- [ ] CloudWatch alarm for Lambda errors.
+- [ ] HTTP API.
+    - Deleting/disabling clients.
+    - External health check.
+- [ ] _Heartbeat_ check.
+    - May run separate from the regular check-scheduler.
+    - Send a "heartbeat" message to all clients.
+    - Record the last heartbeat in the database under the Client's metadata.
+- [x] Log-level control.
+    - Move the verbose logging to the `DEBUG` log level.
 - [x] Refactor DynamoDB tables into single table.
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html?shortFooter=true
     - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html
@@ -349,17 +358,8 @@ Stack `mon-dev` status:  CREATE_COMPLETE
     - Lambda cold-start time may be improved by using `tinylog` or `logback`.
 - [ ] Change check notification handlers from a `List` to a `Set`.
     - Will this result in an inferior experience, as the user must remember to use `listOf()` for some values and `setOf()` for others?
-- [ ] VPC support.
-    - Probably only the notification handlers and serverless checks will need to run within the VPC.
-- [ ] CloudWatch alarm for Lambda errors.
-- [ ] HTTP API.
-    - Deleting/disabling clients.
-    - External health check.
 - [ ] Web UI.
-- [ ] Support for AWS credential profiles (`~/.aws/credentials`) for CLI deployment.
 - [x] Implement check timeouts.
 - [ ] Implement flapping detection.
-- [ ] Implement occurrences notification handling.
-    - Only send notification if _x_ number of warning/critical/unknown have occurred in sequence.
 - [ ] Implement `volatile` checks.
     - Checks which are not scheduled by the backend, but instead reported asynchronously by the client.
