@@ -38,7 +38,11 @@ internal class Dao : KoinComponent {
         val clientHistoryEntry = ClientHistoryRecord(
                 name = client.name,
                 description = description)
-        db.batchSave(client, clientHistoryEntry)
+        // Performed with two consecutive saves, since it's possible that both
+        // records can have the same partition and range key, which will cause
+        // a failure when using batchSave().
+        db.save(client)
+        db.save(clientHistoryEntry)
     }
 
     fun saveNotification(handler: NotificationHandler, resultId: String, resultCompletedAt: ZonedDateTime,
