@@ -12,8 +12,6 @@ import org.koin.standalone.inject
 
 import us.aharon.monitoring.core.handlers.NotificationHandler
 
-import java.time.ZonedDateTime
-
 
 internal class Dao : KoinComponent {
 
@@ -45,12 +43,14 @@ internal class Dao : KoinComponent {
         db.save(clientHistoryEntry)
     }
 
-    fun saveNotification(handler: NotificationHandler, resultId: String, resultCompletedAt: ZonedDateTime,
-                         description: String) {
+    fun saveNotification(handler: NotificationHandler, result: CheckResultRecord, description: String) {
         val notification = NotificationRecord(
                 handler = handler::class.java.canonicalName,
-                resultId = resultId,
-                resultCompletedAt = resultCompletedAt,
+                checkGroup = result.group,
+                checkName = result.name,
+                source = result.source,
+                resultId = result.resultId,
+                resultCompletedAt = result.completedAt,
                 description = description)
         db.save(notification)
     }

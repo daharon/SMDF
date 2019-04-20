@@ -405,6 +405,7 @@ Resources:
                 Action:
                   - dynamodb:BatchWriteItem
                   - dynamodb:PutItem
+                  - dynamodb:UpdateItem
                 Resource:
                   - !GetAtt MonitoringTable.Arn
         - PolicyName: ParameterStore

@@ -44,6 +44,8 @@ internal class NotificationProcessor :
     fun run(event: SQSEvent, checks: List<CheckGroup>, context: Context) = event.records.forEach { message ->
         val notification = json.readValue<NotificationEvent>(message.body)
         val check = checks.getCheck(notification.checkResult?.group!!, notification.checkResult.name!!)
+        log.debug { "Check result ID:  ${notification.checkResult.resultId}" }
+        log.debug { "Check result completed at:  ${notification.checkResult.completedAt}" }
         log.info("Running notification handler:  ${notification.handler}")
         // Create an instance of the handler given its fully qualified name.
         val handler = Class.forName(notification.handler).newInstance() as NotificationHandler
@@ -56,11 +58,11 @@ internal class NotificationProcessor :
         try {
             handler.run(check, notification.checkResult!!, context, credentialsProvider)
         } catch (e: Exception) {
-            db.saveNotification(handler, notification.checkResult.resultId!!, notification.checkResult.completedAt!!,
-                    "Notification handler failed:  ${e.message}")
+            val msg = "Notification handler failed:  ${e.message}"
+            log.error(msg)
+            db.saveNotification(handler, notification.checkResult, msg)
             throw e
         }
-        db.saveNotification(handler, notification.checkResult.resultId!!, notification.checkResult.completedAt!!,
-                "Executed notification.")
+        db.saveNotification(handler, notification.checkResult, "Executed notification.")
     }
 }

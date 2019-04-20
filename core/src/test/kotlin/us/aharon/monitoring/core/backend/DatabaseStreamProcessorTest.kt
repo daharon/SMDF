@@ -25,6 +25,7 @@ import us.aharon.monitoring.core.common.*
 import us.aharon.monitoring.core.db.CheckResultRecord
 import us.aharon.monitoring.core.db.CheckResultStatus
 import us.aharon.monitoring.core.db.ClientRecord
+import us.aharon.monitoring.core.db.NotificationRecord
 import us.aharon.monitoring.core.events.NotificationEvent
 import us.aharon.monitoring.core.extensions.DynamoDBTableExtension
 import us.aharon.monitoring.core.extensions.LoadModulesExtension
@@ -126,6 +127,35 @@ class DatabaseStreamProcessorTest : KoinTest {
             // Verify that the client queue has been deleted.
             val listQueues = sqs.listQueues()
             assert(listQueues.queueUrls.isEmpty())
+        }
+    }
+
+    @Nested
+    @ExtendWith(LoadModulesExtension::class)
+    inner class NotificationEvents {
+
+        @Test
+        fun `Notification records should be ignored`() {
+            val notificationEvent = DynamodbTestEvent(mapOf(
+                    StreamRecord().withNewImage(
+                            mapOf<String, AttributeValue>(
+                                    "pk" to AttributeValue("abc123"),
+                                    "sk" to AttributeValue("2018-08-23T11:41:44Z"),
+                                    "data" to AttributeValue(NotificationRecord.DATA_FIELD),
+                                    "handler" to AttributeValue("com.example.GoNotify"),
+                                    "checkGroup" to AttributeValue("test"),
+                                    "checkName" to AttributeValue("Test Check"),
+                                    "source" to AttributeValue("server-1.example.com"),
+                                    "resultId" to AttributeValue("xyz789"),
+                                    "resultCompletedAt" to AttributeValue("2018-08-23T11:40:00Z"),
+                                    "description" to AttributeValue("Notification sent.")
+                            )
+                    ) to OperationType.INSERT
+            ))
+            // No resources available.
+            // If the process attempts to interact with the DB or other resources,
+            // then an exception should be thrown.
+            DatabaseStreamProcessor().run(notificationEvent, emptyList())
         }
     }
 }

@@ -47,19 +47,19 @@ class NotificationProcessorTest : KoinTest {
             contacts = listOf("devops")
         }
     })
+    private val checkResult = CheckResultRecord(
+            scheduledAt = ZonedDateTime.parse("2018-08-23T11:37:44Z"),
+            executedAt = ZonedDateTime.parse("2018-08-23T11:38:44Z"),
+            completedAt = ZonedDateTime.parse("2018-08-23T11:39:44Z"),
+            group = "test",
+            name = "test-check",
+            source = "test-client-1.example.com",
+            status = CheckResultStatus.OK,
+            output = "OK: Check was successful")
     private val singleTestEvent = SQSTestEvent(listOf(
             mapOf(
                     "handler" to TestNotificationHandler::class.java.canonicalName,
-                    "checkResult" to CheckResultRecord(
-                            scheduledAt = ZonedDateTime.parse("2018-08-23T11:37:44Z"),
-                            executedAt = ZonedDateTime.parse("2018-08-23T11:38:44Z"),
-                            completedAt = ZonedDateTime.parse("2018-08-23T11:39:44Z"),
-                            group = "test",
-                            name = "test-check",
-                            source = "test-client-1.example.com",
-                            status = CheckResultStatus.OK,
-                            output = "OK: Check was successful"
-                    )
+                    "checkResult" to checkResult
             )
     ))
 
@@ -71,10 +71,10 @@ class NotificationProcessorTest : KoinTest {
 
         val db: DynamoDBMapper by inject()
         val query = DynamoDBQueryExpression<NotificationRecord>()
-                .withKeyConditionExpression("#pk = :handlerId")
+                .withKeyConditionExpression("#pk = :notifId")
                 .withExpressionAttributeNames(mapOf("#pk" to "pk"))
                 .withExpressionAttributeValues(mapOf(
-                        ":handlerId" to AttributeValue(TestNotificationHandler::class.java.canonicalName)))
+                        ":notifId" to AttributeValue(NotificationRecord.generateNotificationId(checkResult.group!!, checkResult.name!!))))
                 .withConsistentRead(true)
                 .withLimit(1)
         val notification = db.query(NotificationRecord::class.java, query).firstOrNull()

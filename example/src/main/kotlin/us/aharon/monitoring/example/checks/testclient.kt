@@ -14,6 +14,8 @@ import us.aharon.monitoring.example.handlers.PermissionsNotificationHandler
  */
 val TEST_CLIENT_CHECKS = checks("test") {
 
+    val clientTags = listOf("test-client")
+
     mapOf(
             "Ok check"       to "echo 'OK - Situation is normal' && exit 0",
             "Warning check"  to "echo 'WARNING - Situation may be in a bad state soon' && exit 1",
@@ -23,9 +25,16 @@ val TEST_CLIENT_CHECKS = checks("test") {
 
         defaultClientCheck(name) {
             command     = chk
-            tags        = listOf("test-client")
+            tags        = clientTags
             interval    = 2
             handlers    += PermissionsNotificationHandler::class
         }
+    }
+
+    defaultClientCheck("Timeout") {
+        command  = "echo 'This check should time out.' && sleep 30"
+        tags     = clientTags
+        interval = 5
+        timeout  = 5
     }
 }
