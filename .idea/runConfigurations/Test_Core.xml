@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Test Core" type="JUnit" factoryName="JUnit">
-    <module name="monitoring-core" />
-    <option name="PACKAGE_NAME" value="us.aharon.monitoring.core" />
+    <module name="smdf-core" />
+    <option name="PACKAGE_NAME" value="us.aharon.smdf.core" />
     <option name="MAIN_CLASS_NAME" value="" />
     <option name="METHOD_NAME" value="" />
     <option name="TEST_OBJECT" value="package" />

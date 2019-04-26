@@ -1,13 +1,13 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Monitoring
+Description: 'SMDF - ${environment}'
 
 Resources:
 
   ##
   # Lambda Functions
   ##
-  MonitoringClientRegistration:
+  SMDFClientRegistration:
     Type: AWS::Lambda::Function
     Properties:
       Description: Register clients with the monitoring system.
@@ -16,23 +16,23 @@ Resources:
       Code:
         S3Bucket: '${codeS3Bucket}'
         S3Key: '${codeS3Key}'
-      Role: !GetAtt MonitoringClientRegistrationRole.Arn
+      Role: !GetAtt SMDFClientRegistrationRole.Arn
       Timeout: 60
       MemorySize: 512
       Environment:
         Variables:
           LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
-          CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
-          DB_TABLE: !Ref MonitoringTable
-          CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultQueue
+          CLIENT_CHECK_TOPIC: !Ref SMDFClientCheckDistributor
+          DB_TABLE: !Ref SMDFTable
+          CHECK_RESULTS_QUEUE: !Ref SMDFCheckResultQueue
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
-  MonitoringDatabaseStreamProcessor:
+  SMDFDatabaseStreamProcessor:
     Type: AWS::Lambda::Function
     Properties:
       Description: Process events from the database stream.
@@ -41,22 +41,22 @@ Resources:
       Code:
         S3Bucket: '${codeS3Bucket}'
         S3Key: '${codeS3Key}'
-      Role: !GetAtt MonitoringDatabaseStreamProcessorRole.Arn
+      Role: !GetAtt SMDFDatabaseStreamProcessorRole.Arn
       Timeout: 60
       MemorySize: 512
       Environment:
         Variables:
           LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
-          DB_TABLE: !Ref MonitoringTable
-          NOTIFICATION_QUEUE: !Ref MonitoringNotificationQueue
+          DB_TABLE: !Ref SMDFTable
+          NOTIFICATION_QUEUE: !Ref SMDFNotificationQueue
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
-  MonitoringCheckScheduler:
+  SMDFCheckScheduler:
     Type: AWS::Lambda::Function
     Properties:
       Description: Fire events to the SNS Fanout Topic.
@@ -65,22 +65,22 @@ Resources:
       Code:
         S3Bucket: '${codeS3Bucket}'
         S3Key: '${codeS3Key}'
-      Role: !GetAtt MonitoringCheckSchedulerRole.Arn
+      Role: !GetAtt SMDFCheckSchedulerRole.Arn
       Timeout: 60
       MemorySize: 512
       Environment:
         Variables:
           LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
-          CLIENT_CHECK_TOPIC: !Ref MonitoringClientCheckDistributor
-          SERVERLESS_CHECK_QUEUE: !Ref MonitoringServerlessCheckQueue
+          CLIENT_CHECK_TOPIC: !Ref SMDFClientCheckDistributor
+          SERVERLESS_CHECK_QUEUE: !Ref SMDFServerlessCheckQueue
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
-  MonitoringCheckResultReceiver:
+  SMDFCheckResultReceiver:
     Type: AWS::Lambda::Function
     Properties:
       Description: Collect and save results returned from checks.
@@ -89,21 +89,21 @@ Resources:
       Code:
         S3Bucket: '${codeS3Bucket}'
         S3Key: '${codeS3Key}'
-      Role: !GetAtt MonitoringCheckResultReceiverRole.Arn
+      Role: !GetAtt SMDFCheckResultReceiverRole.Arn
       Timeout: 60
       MemorySize: 512
       Environment:
         Variables:
           LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
-          DB_TABLE: !Ref MonitoringTable
+          DB_TABLE: !Ref SMDFTable
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
-  MonitoringNotificationProcessor:
+  SMDFNotificationProcessor:
     Type: AWS::Lambda::Function
     Properties:
       Description: Run notification handlers.
@@ -112,7 +112,7 @@ Resources:
       Code:
         S3Bucket: '${codeS3Bucket}'
         S3Key: '${codeS3Key}'
-      Role: !GetAtt MonitoringNotificationProcessorRole.Arn
+      Role: !GetAtt SMDFNotificationProcessorRole.Arn
       # Long timeout to give user some more flexibility.
       Timeout: 300
       # Maximum memory size, since this will run non-core code.
@@ -121,14 +121,14 @@ Resources:
         Variables:
           LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
-          DB_TABLE: !Ref MonitoringTable
+          DB_TABLE: !Ref SMDFTable
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
-  MonitoringServerlessCheckProcessor:
+  SMDFServerlessCheckProcessor:
     Type: AWS::Lambda::Function
     Properties:
       Description: Run serverless checks.
@@ -137,7 +137,7 @@ Resources:
       Code:
         S3Bucket: '${codeS3Bucket}'
         S3Key: '${codeS3Key}'
-      Role: !GetAtt MonitoringServerlessCheckProcessorRole.Arn
+      Role: !GetAtt SMDFServerlessCheckProcessorRole.Arn
       # Long timeout to give user some more flexibility.
       Timeout: 300
       # Maximum memory size, since this will run non-core code.
@@ -146,20 +146,20 @@ Resources:
         Variables:
           LOG_LEVEL: '${logLevel}'
           ENVIRONMENT: '${environment}'
-          CHECK_RESULTS_QUEUE: !Ref MonitoringCheckResultQueue
+          CHECK_RESULTS_QUEUE: !Ref SMDFCheckResultQueue
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
   ##
   # IAM Roles
   ##
-  MonitoringClientRegistrationRole:
+  SMDFClientRegistrationRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/monitoring/${environment}/'
+      Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -185,7 +185,7 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                 Resource:
-                  - !GetAtt MonitoringTable.Arn
+                  - !GetAtt SMDFTable.Arn
               - Effect: Allow
                 Action:
                   - dynamodb:Query
@@ -194,7 +194,7 @@ Resources:
                 Resource:
                   - !Join
                     - '/'
-                    - - !GetAtt MonitoringTable.Arn
+                    - - !GetAtt SMDFTable.Arn
                       - 'index'
                       - 'pk-data-index'
         - PolicyName: SQSClientQueues
@@ -210,7 +210,7 @@ Resources:
                     - - 'arn:aws:sqs'
                       - !Ref 'AWS::Region'
                       - !Ref 'AWS::AccountId'
-                      - 'monitoring-*'
+                      - 'smdf-*'
         - PolicyName: SNSClientSubscriptions
           PolicyDocument:
             Version: 2012-10-17
@@ -222,12 +222,12 @@ Resources:
                   - sns:GetSubscriptionAttributes
                   - sns:Unsubscribe
                 Resource:
-                  - !Ref MonitoringClientCheckDistributor
+                  - !Ref SMDFClientCheckDistributor
 
-  MonitoringDatabaseStreamProcessorRole:
+  SMDFDatabaseStreamProcessorRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/monitoring/${environment}/'
+      Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -252,7 +252,7 @@ Resources:
                   - dynamodb:ListStreams
                   - dynamodb:Query
                 Resource:
-                  - !GetAtt MonitoringTable.StreamArn
+                  - !GetAtt SMDFTable.StreamArn
         - PolicyName: DynamoDBTable
           PolicyDocument:
             Version: 2012-10-17
@@ -261,7 +261,7 @@ Resources:
                 Action:
                   - dynamodb:Query
                 Resource:
-                  - !GetAtt MonitoringTable.Arn
+                  - !GetAtt SMDFTable.Arn
         - PolicyName: SQSClientQueues
           PolicyDocument:
             Version: 2012-10-17
@@ -275,7 +275,7 @@ Resources:
                     - - 'arn:aws:sqs'
                       - !Ref 'AWS::Region'
                       - !Ref 'AWS::AccountId'
-                      - 'monitoring-*'
+                      - 'smdf-*'
         - PolicyName: SNSClientSubscriptions
           PolicyDocument:
             Version: 2012-10-17
@@ -284,7 +284,7 @@ Resources:
                 Action:
                   - sns:Unsubscribe
                 Resource:
-                  - !Ref MonitoringClientCheckDistributor
+                  - !Ref SMDFClientCheckDistributor
         - PolicyName: NotificationQueue
           PolicyDocument:
             Version: 2012-10-17
@@ -293,12 +293,12 @@ Resources:
                 Action:
                   - sqs:SendMessage
                 Resource:
-                  - !GetAtt MonitoringNotificationQueue.Arn
+                  - !GetAtt SMDFNotificationQueue.Arn
 
-  MonitoringCheckSchedulerRole:
+  SMDFCheckSchedulerRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/monitoring/${environment}/'
+      Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -319,7 +319,7 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource:
-                  - !Ref MonitoringClientCheckDistributor
+                  - !Ref SMDFClientCheckDistributor
         - PolicyName: SQSQueues
           PolicyDocument:
             Version: 2012-10-17
@@ -328,12 +328,12 @@ Resources:
                 Action:
                   - sqs:SendMessage
                 Resource:
-                  - !GetAtt MonitoringServerlessCheckQueue.Arn
+                  - !GetAtt SMDFServerlessCheckQueue.Arn
 
-  MonitoringCheckResultReceiverRole:
+  SMDFCheckResultReceiverRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/monitoring/${environment}/'
+      Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -357,7 +357,7 @@ Resources:
                   - sqs:ReceiveMessage
                   - sqs:GetQueueAttributes
                 Resource:
-                  - !GetAtt MonitoringCheckResultQueue.Arn
+                  - !GetAtt SMDFCheckResultQueue.Arn
         - PolicyName: DynamoDBTable
           PolicyDocument:
             Version: 2012-10-17
@@ -367,12 +367,12 @@ Resources:
                   - dynamodb:BatchWriteItem
                   - dynamodb:PutItem
                 Resource:
-                  - !GetAtt MonitoringTable.Arn
+                  - !GetAtt SMDFTable.Arn
 
-  MonitoringNotificationProcessorRole:
+  SMDFNotificationProcessorRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/monitoring/${environment}/'
+      Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -396,7 +396,7 @@ Resources:
                   - sqs:ReceiveMessage
                   - sqs:GetQueueAttributes
                 Resource:
-                  - !GetAtt MonitoringNotificationQueue.Arn
+                  - !GetAtt SMDFNotificationQueue.Arn
         - PolicyName: DynamoDBTable
           PolicyDocument:
             Version: 2012-10-17
@@ -407,7 +407,7 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                 Resource:
-                  - !GetAtt MonitoringTable.Arn
+                  - !GetAtt SMDFTable.Arn
         - PolicyName: ParameterStore
           PolicyDocument:
             Version: 2012-10-17
@@ -423,10 +423,10 @@ Resources:
                       - !Ref 'AWS::AccountId'
                       - 'parameter${notificationHandlerParameterPath}/*'
 
-  MonitoringServerlessCheckProcessorRole:
+  SMDFServerlessCheckProcessorRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/monitoring/${environment}/'
+      Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       AssumeRolePolicyDocument:
@@ -450,7 +450,7 @@ Resources:
                   - sqs:ReceiveMessage
                   - sqs:GetQueueAttributes
                 Resource:
-                  - !GetAtt MonitoringServerlessCheckQueue.Arn
+                  - !GetAtt SMDFServerlessCheckQueue.Arn
         - PolicyName: CheckResultQueue
           PolicyDocument:
             Version: 2012-10-17
@@ -459,7 +459,7 @@ Resources:
                 Action:
                   - sqs:SendMessage
                 Resource:
-                  - !GetAtt MonitoringCheckResultQueue.Arn
+                  - !GetAtt SMDFCheckResultQueue.Arn
         - PolicyName: ParameterStore
           PolicyDocument:
             Version: 2012-10-17
@@ -480,10 +480,10 @@ Resources:
   ##
   <#list serverlessExecutorPermissions as name, permissions>
     <#assign shortName = name?split(".")?last>
-  MonitoringServerlessExecutor${shortName}Role:
+  SMDFServerlessExecutor${shortName}Role:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/monitoring/${environment}/'
+      Path: '/smdf/${environment}/'
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -492,7 +492,7 @@ Resources:
               Service:
                 - lambda.amazonaws.com
               AWS:
-                - !GetAtt MonitoringServerlessCheckProcessorRole.Arn
+                - !GetAtt SMDFServerlessCheckProcessorRole.Arn
             Action:
               - sts:AssumeRole
       <#if permissions?has_content>
@@ -513,13 +513,13 @@ Resources:
                   </#list>
         </#list>
       </#if>
-  MonitoringServerlessExecutor${shortName}Parameter:
+  SMDFServerlessExecutor${shortName}Parameter:
     Type: AWS::SSM::Parameter
     Properties:
       Description: IAM role for the ${shortName} serverless check.
       Name: '${serverlessExecutorParameterPath}/${name}'
       Type: String
-      Value: !GetAtt MonitoringServerlessExecutor${shortName}Role.Arn
+      Value: !GetAtt SMDFServerlessExecutor${shortName}Role.Arn
 
   </#list>
 
@@ -528,10 +528,10 @@ Resources:
   ##
   <#list notificationHandlerPermissions as name, permissions>
     <#assign shortName = name?split(".")?last>
-  MonitoringNotificationHandler${shortName}Role:
+  SMDFNotificationHandler${shortName}Role:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/monitoring/${environment}/'
+      Path: '/smdf/${environment}/'
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -540,7 +540,7 @@ Resources:
               Service:
                 - lambda.amazonaws.com
               AWS:
-                - !GetAtt MonitoringNotificationProcessorRole.Arn
+                - !GetAtt SMDFNotificationProcessorRole.Arn
             Action:
               - sts:AssumeRole
       <#if permissions?has_content>
@@ -561,27 +561,27 @@ Resources:
                   </#list>
         </#list>
       </#if>
-  MonitoringNotificationHandler${shortName}Parameter:
+  SMDFNotificationHandler${shortName}Parameter:
     Type: AWS::SSM::Parameter
     Properties:
       Description: IAM role for the ${shortName} notification handler.
       Name: '${notificationHandlerParameterPath}/${name}'
       Type: String
-      Value: !GetAtt MonitoringNotificationHandler${shortName}Role.Arn
+      Value: !GetAtt SMDFNotificationHandler${shortName}Role.Arn
 
   </#list>
 
   ##
   # IAM Policies & Roles for clients.
   ##
-  MonitoringECSClientRole:
+  SMDFECSClientRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: 'MonitoringECSClient-${environment}'
-      Path: '/monitoring/${environment}/'
+      RoleName: 'SMDFECSClient-${environment}'
+      Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-        - !Ref MonitoringClientPolicy
+        - !Ref SMDFClientPolicy
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -592,13 +592,13 @@ Resources:
             Action:
               - sts:AssumeRole
 
-  MonitoringEC2ClientRole:
+  SMDFEC2ClientRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: 'MonitoringEC2Client-${environment}'
-      Path: '/monitoring/${environment}/'
+      RoleName: 'SMDFEC2Client-${environment}'
+      Path: '/smdf/${environment}/'
       ManagedPolicyArns:
-        - !Ref MonitoringClientPolicy
+        - !Ref SMDFClientPolicy
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -609,20 +609,20 @@ Resources:
             Action:
               - sts:AssumeRole
 
-  MonitoringClientInstanceProfile:
+  SMDFClientInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      InstanceProfileName: 'MonitoringEC2Client-${environment}'
-      Path: '/monitoring/${environment}/'
+      InstanceProfileName: 'SMDFEC2Client-${environment}'
+      Path: '/smdf/${environment}/'
       Roles:
-        - !Ref MonitoringEC2ClientRole
+        - !Ref SMDFEC2ClientRole
 
-  MonitoringClientPolicy:
+  SMDFClientPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
-      ManagedPolicyName: 'MonitoringClient-${environment}'
-      Description: 'Allows monitoring clients the necessary access for the ${environment} environment.'
-      Path: '/monitoring/${environment}/'
+      ManagedPolicyName: 'SMDFClient-${environment}'
+      Description: 'Allows SMDF clients the necessary access for the ${environment} environment.'
+      Path: '/smdf/${environment}/'
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -639,12 +639,12 @@ Resources:
                   - !Join
                     - ''
                     - - 'parameter'
-                      - !Ref MonitoringClientRegistrationParameter
+                      - !Ref SMDFClientRegistrationParameter
           - Effect: Allow
             Action:
               - lambda:InvokeFunction
             Resource:
-              - !GetAtt MonitoringClientRegistration.Arn
+              - !GetAtt SMDFClientRegistration.Arn
           # Receiving check messages.
           - Effect: Allow
             Action:
@@ -657,81 +657,81 @@ Resources:
                 - - 'arn:aws:sqs'
                   - !Ref 'AWS::Region'
                   - !Ref 'AWS::AccountId'
-                  - 'monitoring-*'
+                  - 'smdf-*'
           # Sending check results.
           - Effect: Allow
             Action:
               - sqs:SendMessage
               - sqs:SendMessageBatch
             Resource:
-              - !GetAtt MonitoringCheckResultQueue.Arn
+              - !GetAtt SMDFCheckResultQueue.Arn
 
   ##
   # Parameter Store
   ##
-  MonitoringClientRegistrationParameter:
+  SMDFClientRegistrationParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Description: Client registration function ARN.
-      Name: '/${environment}/monitoring/registration'
+      Name: '/${environment}/smdf/registration'
       Type: String
-      Value: !GetAtt MonitoringClientRegistration.Arn
+      Value: !GetAtt SMDFClientRegistration.Arn
 
   ##
   # Scheduled Events
   ##
-  MonitoringCheckSchedulerEventRule:
+  SMDFCheckSchedulerEventRule:
     Type: AWS::Events::Rule
     Properties:
-      Description: Monitoring check scheduler event rule.
+      Description: SMDF check scheduler event rule.
       ScheduleExpression: rate(1 minute)
       State: ENABLED
       Targets:
-        - Arn: !GetAtt MonitoringCheckScheduler.Arn
-          Id: MonitoringCheckScheduler
+        - Arn: !GetAtt SMDFCheckScheduler.Arn
+          Id: SMDFCheckScheduler
 
-  MonitoringCheckSchedulerPermission:
+  SMDFCheckSchedulerPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref MonitoringCheckScheduler
+      FunctionName: !Ref SMDFCheckScheduler
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt MonitoringCheckSchedulerEventRule.Arn
+      SourceArn: !GetAtt SMDFCheckSchedulerEventRule.Arn
 
   ###
   # Event Source Mappings
   ###
-  MonitoringTableEvents:
+  SMDFTableEvents:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       Enabled: true
-      EventSourceArn: !GetAtt MonitoringTable.StreamArn
-      FunctionName: !GetAtt MonitoringDatabaseStreamProcessor.Arn
+      EventSourceArn: !GetAtt SMDFTable.StreamArn
+      FunctionName: !GetAtt SMDFDatabaseStreamProcessor.Arn
       StartingPosition: LATEST
       BatchSize: 10
 
-  MonitoringCheckResultReceiverEvents:
+  SMDFCheckResultReceiverEvents:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       Enabled: true
-      EventSourceArn: !GetAtt MonitoringCheckResultQueue.Arn
-      FunctionName: !GetAtt MonitoringCheckResultReceiver.Arn
+      EventSourceArn: !GetAtt SMDFCheckResultQueue.Arn
+      FunctionName: !GetAtt SMDFCheckResultReceiver.Arn
       BatchSize: 10
 
-  MonitoringNotificationProcessorEvents:
+  SMDFNotificationProcessorEvents:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       Enabled: true
-      EventSourceArn: !GetAtt MonitoringNotificationQueue.Arn
-      FunctionName: !GetAtt MonitoringNotificationProcessor.Arn
+      EventSourceArn: !GetAtt SMDFNotificationQueue.Arn
+      FunctionName: !GetAtt SMDFNotificationProcessor.Arn
       BatchSize: 1
 
-  MonitoringServerlessCheckProcessorEvents:
+  SMDFServerlessCheckProcessorEvents:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       Enabled: true
-      EventSourceArn: !GetAtt MonitoringServerlessCheckQueue.Arn
-      FunctionName: !GetAtt MonitoringServerlessCheckProcessor.Arn
+      EventSourceArn: !GetAtt SMDFServerlessCheckQueue.Arn
+      FunctionName: !GetAtt SMDFServerlessCheckProcessor.Arn
       BatchSize: 1
 
   ##
@@ -739,48 +739,48 @@ Resources:
   #
   # Visibility timeouts must be >= the Lambda function that consumes from it.
   ##
-  MonitoringCheckResultQueue:
+  SMDFCheckResultQueue:
     Type: AWS::SQS::Queue
     Properties:
       VisibilityTimeout: 65
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
-  MonitoringNotificationQueue:
+  SMDFNotificationQueue:
     Type: AWS::SQS::Queue
     Properties:
       VisibilityTimeout: 305
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
-  MonitoringServerlessCheckQueue:
+  SMDFServerlessCheckQueue:
     Type: AWS::SQS::Queue
     Properties:
       VisibilityTimeout: 305
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'
 
   ##
   # SNS Topics
   ##
-  MonitoringClientCheckDistributor:
+  SMDFClientCheckDistributor:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: 'monitoring-${environment}-client-check-distributor'
+      DisplayName: 'smdf-${environment}-client-check-distributor'
 
   ##
   # DynamoDB Tables
   ##
-  MonitoringTable:
+  SMDFTable:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
@@ -821,6 +821,6 @@ Resources:
         StreamViewType: NEW_AND_OLD_IMAGES
       Tags:
         - Key: App
-          Value: Monitoring
+          Value: SMDF
         - Key: Env
           Value: '${environment}'

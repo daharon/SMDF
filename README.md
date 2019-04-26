@@ -1,4 +1,4 @@
-# Cloud Monitoring Development Framework
+# Serverless Monitoring Development Framework
 
 A framework for creating monitoring systems leveraging Amazon AWS services.
 
@@ -7,7 +7,7 @@ A framework for creating monitoring systems leveraging Amazon AWS services.
 - Cost Effective
 
 ```kotlin
-import us.aharon.monitoring.core.*
+import us.aharon.smdf.core.*
 
 class App : Application() {
 
@@ -70,7 +70,7 @@ registered or defined.
 
 An example `Application` implementation:   
 ```kotlin
-import us.aharon.monitoring.core.api.Application
+import us.aharon.smdf.core.api.Application
 
 class MyMonitoringApp : Application() {
 
@@ -92,8 +92,8 @@ There are two types of checks which the framework defines.
 Client checks are run on a server instance or within a Docker container.   
 The `LINUX_CHECKS` from the `Application` example might be defined like so:
 ```kotlin
-import us.aharon.monitoring.core.api.checks
-import us.aharon.monitoring.core.api.check
+import us.aharon.smdf.core.api.checks
+import us.aharon.smdf.core.api.check
 
 val LINUX_CHECKS = checks("Linux System") {
 
@@ -127,8 +127,8 @@ The `contacts` here are email addresses, but that is not a requirement.
 Serverless checks are run within AWS Lambda.   
 The `METRIC_CHECKS` from the `Application` example might perform queries on a Graphite instance:
 ```kotlin
-import us.aharon.monitoring.core.api.checks
-import us.aharon.monitoring.core.api.serverlessCheck
+import us.aharon.smdf.core.api.checks
+import us.aharon.smdf.core.api.serverlessCheck
 
 val METRIC_CHECKS = checks("Graphite") {
 
@@ -172,8 +172,8 @@ Many checks will share the same properties, like `contacts`, `interval`, `handle
 In order to avoid repeating these values _Check Templates_ can be created.   
 Here are two example check templates.  One for client/server checks, and a second for serverless checks.
 ```kotlin
-import us.aharon.monitoring.core.api.clientCheckTemplate
-import us.aharon.monitoring.core.api.serverlessCheckTemplate
+import us.aharon.smdf.core.api.clientCheckTemplate
+import us.aharon.smdf.core.api.serverlessCheckTemplate
 
 val defaultClientCheck = clientCheckTemplate {
     interval = 5
@@ -210,7 +210,7 @@ A contrived example:
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 import com.amazonaws.services.lambda.runtime.Context
-import us.aharon.monitoring.core.checks.*
+import us.aharon.smdf.core.checks.*
 
 class CheckIamUsers : ServerlessExecutor() {
 
@@ -251,9 +251,9 @@ import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import com.amazonaws.services.simpleemail.model.*
-import us.aharon.monitoring.core.checks.*
-import us.aharon.monitoring.core.db.CheckResultRecord
-import us.aharon.monitoring.core.handlers.NotificationHandler
+import us.aharon.smdf.core.checks.*
+import us.aharon.smdf.core.db.CheckResultRecord
+import us.aharon.smdf.core.handlers.NotificationHandler
 
 class EmailNotificationHandler : NotificationHandler() {
 

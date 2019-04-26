@@ -16,13 +16,13 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="core" />
-        <module name="example" />
+        <module name="smdf-core" />
+        <module name="smdf-example" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="monitoring.core" target="1.8" />
-      <module name="monitoring.example" target="1.8" />
+      <module name="smdf.core" target="1.8" />
+      <module name="smdf.example" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
