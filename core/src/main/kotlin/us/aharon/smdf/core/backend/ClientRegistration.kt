@@ -91,7 +91,8 @@ class ClientRegistration : KoinComponent {
                     val clientRecord = existingClient.copy(
                             queueArn = qns.queueArn,
                             queueUrl = qns.queueUrl,
-                            subscriptionArn = qns.subscriptionArn)
+                            subscriptionArn = qns.subscriptionArn,
+                            active = true)
                     db.saveClient(clientRecord, "Updated client with tags ${clientRecord.tags}.")
                     log.debug { "Saved client to database:  $clientRecord" }
                     ClientRegistrationResponse(

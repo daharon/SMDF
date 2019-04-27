@@ -5,6 +5,8 @@
 package us.aharon.smdf.core.backend
 
 import cloud.localstack.LocalstackExtension
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.dynamodbv2.model.StreamRecord
@@ -22,10 +24,7 @@ import org.koin.test.KoinTest
 import us.aharon.smdf.core.api.checks
 import us.aharon.smdf.core.api.check
 import us.aharon.smdf.core.common.*
-import us.aharon.smdf.core.db.CheckResultRecord
-import us.aharon.smdf.core.db.CheckResultStatus
-import us.aharon.smdf.core.db.ClientRecord
-import us.aharon.smdf.core.db.NotificationRecord
+import us.aharon.smdf.core.db.*
 import us.aharon.smdf.core.events.NotificationEvent
 import us.aharon.smdf.core.extensions.DynamoDBTableExtension
 import us.aharon.smdf.core.extensions.LoadModulesExtension
@@ -127,6 +126,60 @@ class DatabaseStreamProcessorTest : KoinTest {
             // Verify that the client queue has been deleted.
             val listQueues = sqs.listQueues()
             assert(listQueues.queueUrls.isEmpty())
+        }
+
+        @Test
+        fun `Client de-activated`() {
+            val sqs: AmazonSQS by inject()
+            val db: DynamoDBMapper by inject()
+            // Create client queue.
+            val queue = sqs.createQueue("TEST")
+            // The event should be routed to the ClientCleanup function.
+            val clientEvent = DynamodbTestEvent(mapOf(
+                    StreamRecord().withOldImage(
+                            mapOf<String, AttributeValue>(
+                                    "pk" to AttributeValue("server-1.example.com"),
+                                    "sk" to AttributeValue("2018-08-23T11:41:44Z"),  // createdAt
+                                    "data" to AttributeValue(ClientRecord.DATA_FIELD),
+                                    "tags" to AttributeValue().withL(AttributeValue("fake")),
+                                    "queueArn" to AttributeValue(FAKE_SQS_QUEUE_ARN),
+                                    "queueUrl" to AttributeValue(queue.queueUrl),
+                                    "subscriptionArn" to AttributeValue(FAKE_SNS_SUBSCRIPTION_ARN),
+                                    // Client _was_ active.
+                                    "active" to AttributeValue("true")
+                            )
+                    ).withNewImage(
+                            mapOf<String, AttributeValue>(
+                                    "pk" to AttributeValue("server-1.example.com"),
+                                    "sk" to AttributeValue("2018-08-23T11:41:44Z"),
+                                    "data" to AttributeValue(ClientRecord.DATA_FIELD),
+                                    "tags" to AttributeValue().withL(AttributeValue("fake")),
+                                    "queueArn" to AttributeValue(FAKE_SQS_QUEUE_ARN),
+                                    "queueUrl" to AttributeValue(queue.queueUrl),
+                                    "subscriptionArn" to AttributeValue(FAKE_SNS_SUBSCRIPTION_ARN),
+                                    // Client is now NOT active!
+                                    "active" to AttributeValue("false")
+                            )
+                    ) to OperationType.MODIFY
+            ))
+
+            DatabaseStreamProcessor().run(clientEvent, emptyList())
+
+            // Verify that the client queue has been deleted.
+            val listQueues = sqs.listQueues()
+            assert(listQueues.queueUrls.isEmpty())
+            // Verify that the client history record was saved.
+            val query = DynamoDBQueryExpression<ClientHistoryRecord>()
+                    .withKeyConditionExpression("#pk = :clientName and #data = :data")
+                    .withExpressionAttributeValues(mapOf(
+                            ":clientName" to AttributeValue("server-1.example.com"),
+                            ":data" to AttributeValue(ClientHistoryRecord.DATA_FIELD)
+                    ))
+                    .withExpressionAttributeNames(mapOf("#pk" to "pk", "#data" to "data"))
+                    .withIndexName(PK_DATA_INDEX)
+                    .withLimit(1)
+            val clientHistory = db.query(ClientHistoryRecord::class.java, query).first()
+            assert(clientHistory.description!!.contains("client queue and subscription deleted", true))
         }
     }
 

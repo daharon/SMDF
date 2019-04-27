@@ -7,6 +7,7 @@ package us.aharon.smdf.core.backend
 import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.sns.AmazonSNS
+import com.amazonaws.services.sns.model.InvalidParameterException
 import com.amazonaws.services.sns.model.NotFoundException
 import com.amazonaws.services.sns.model.UnsubscribeRequest
 import com.amazonaws.services.sqs.AmazonSQS
@@ -21,7 +22,7 @@ import us.aharon.smdf.core.db.Dao
 
 
 /**
- * Cleanup/delete resources created by the [us.aharon.smdf.core.http.ClientRegistrationHandler] when
+ * Cleanup/delete resources created by the [us.aharon.smdf.core.backend.ClientRegistration] when
  * a client is deleted/modified in the Clients DynamoDB table.
  *
  * - SNS subscription
@@ -63,6 +64,8 @@ internal class ClientCleanup : KoinComponent {
         log.info("Deleted SNS subscription:  $subscriptionArn")
     } catch (e: NotFoundException) {
         log.warn("SNS subscription does not exist:  $subscriptionArn")
+    } catch (e: InvalidParameterException) {
+        log.debug("SNS subscription ARN was invalid:  $subscriptionArn")
     }
 
     /**
@@ -77,12 +80,14 @@ internal class ClientCleanup : KoinComponent {
 
     /**
      * A client was modified.
+     * If the client was de-activated or its record was deleted from the database,
+     * then delete its queue and SNS subscription.
      */
     private fun modify(record: DynamodbEvent.DynamodbStreamRecord) {
         val oldClientRecord = db.marshallClientRecord(record.dynamodb.oldImage)
         val newClientRecord = db.marshallClientRecord(record.dynamodb.newImage)
-        log.info("Checking if any resources for client ${oldClientRecord.name} require deletion.")
 
+        log.info("Checking if any resources for client ${oldClientRecord.name} require deletion.")
         // Delete SNS subscription?
         if (newClientRecord.subscriptionArn != oldClientRecord.subscriptionArn) {
             deleteSubscription(oldClientRecord.subscriptionArn)
@@ -90,6 +95,21 @@ internal class ClientCleanup : KoinComponent {
         // Delete queue?
         if (newClientRecord.queueArn != oldClientRecord.queueArn) {
             deleteQueue(oldClientRecord.queueArn, oldClientRecord.queueUrl)
+        }
+
+        // Was this client de-activated?
+        if (!newClientRecord.active!! && oldClientRecord.active!!) {
+            log.info("Client ${newClientRecord.name} has been de-activated.")
+            deleteSubscription(newClientRecord.subscriptionArn)
+            deleteQueue(newClientRecord.queueArn, newClientRecord.queueUrl)
+            // Clear the appropriate fields for the client record.
+            db.saveClient(
+                    newClientRecord.copy(queueArn = null, queueUrl = null, subscriptionArn = null).apply {
+                        createdAt = newClientRecord.createdAt
+                    },
+                    """Client queue and subscription deleted.
+                        |Queue: ${newClientRecord.queueArn}
+                        |Subscription: ${newClientRecord.subscriptionArn}""".trimMargin())
         }
     }
 }

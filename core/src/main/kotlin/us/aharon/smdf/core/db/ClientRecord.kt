@@ -33,7 +33,11 @@ internal data class ClientRecord(
         var queueUrl: String? = null,
 
         @DynamoDBAttribute
-        var subscriptionArn: String? = null
+        var subscriptionArn: String? = null,
+
+        @DynamoDBAttribute
+        @DynamoDBConvertedBool(value = DynamoDBConvertedBool.Format.true_false)
+        var active: Boolean? = true
 ) {
     @DynamoDBRangeKey
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
@@ -45,10 +49,6 @@ internal data class ClientRecord(
     @DynamoDBAttribute
     @DynamoDBNamed("data")
     var data: String? = DATA_FIELD
-
-    @DynamoDBAttribute
-    @DynamoDBConvertedBool(value = DynamoDBConvertedBool.Format.true_false)
-    var active: Boolean? = true
 
     companion object {
         const val DATA_FIELD = "CLIENT"

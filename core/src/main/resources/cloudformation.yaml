@@ -259,7 +259,9 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  - dynamodb:PutItem
                   - dynamodb:Query
+                  - dynamodb:UpdateItem
                 Resource:
                   - !GetAtt SMDFTable.Arn
         - PolicyName: SQSClientQueues

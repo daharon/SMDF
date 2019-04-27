@@ -45,20 +45,16 @@ internal class DatabaseStreamProcessor : KoinComponent {
             when (dataField) {
                 ClientRecord.DATA_FIELD -> handleClientRecord(it)
                 CheckResultRecord.DATA_FIELD -> handleCheckResultRecord(it, checks)
-                ClientHistoryRecord.DATA_FIELD -> log.debug { "$dataField record:  Do nothing" }
-                NotificationRecord.DATA_FIELD -> log.debug { "$dataField record:  Do nothing" }
+                ClientHistoryRecord.DATA_FIELD -> log.debug("$dataField record:  Do nothing")
+                NotificationRecord.DATA_FIELD -> log.debug("$dataField record:  Do nothing")
                 else -> log.error("Unable to determine record type.")
             }
         }
     }
 
-    private fun handleCheckResultRecord(record: DynamodbEvent.DynamodbStreamRecord, checks: List<CheckGroup>) {
-        _checkResultProcessor.run(record, checks)
-    }
+    private fun handleCheckResultRecord(record: DynamodbEvent.DynamodbStreamRecord, checks: List<CheckGroup>) =
+            _checkResultProcessor.run(record, checks)
 
-    private fun handleClientRecord(record: DynamodbEvent.DynamodbStreamRecord) {
-        // TODO: Update this for more than just client deletion.
-        _clientCleanup.run(record)
-    }
-
+    private fun handleClientRecord(record: DynamodbEvent.DynamodbStreamRecord) =
+            _clientCleanup.run(record)
 }

@@ -13,7 +13,7 @@ import java.time.ZonedDateTime
 internal class DynamoDBTimestampGenerator : DynamoDBAutoGenerator<ZonedDateTime> {
 
     override fun generate(currentValue: ZonedDateTime?): ZonedDateTime =
-            ZonedDateTime.now()
+            currentValue ?: ZonedDateTime.now()
 
     override fun getGenerateStrategy(): DynamoDBAutoGenerateStrategy =
             DynamoDBAutoGenerateStrategy.CREATE
