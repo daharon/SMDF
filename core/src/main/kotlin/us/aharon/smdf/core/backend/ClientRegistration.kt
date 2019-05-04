@@ -25,9 +25,9 @@ import java.util.UUID
 
 
 /**
- * API Gateway handler that registers a client for monitoring.
+ * Lambda handler that registers a client for monitoring.
  */
-class ClientRegistration : KoinComponent {
+internal class ClientRegistration : KoinComponent {
 
     private val env: Env by inject()
     private val log: KLogger by inject { parametersOf(this::class.java.simpleName) }

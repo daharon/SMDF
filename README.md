@@ -80,7 +80,7 @@ class MyMonitoringApp : Application() {
     )
 }
 
-fun main(vararg args: String) = App().run(args)
+fun main(vararg args: String) = MyMonitoringApp().run(args)
 ```
 In the example above, `LINUX_CHECKS` and `METRIC_CHECKS` are groups of checks
 defined elsewhere in the project.
@@ -145,8 +145,8 @@ val METRIC_CHECKS = checks("Graphite") {
 ```
 This check will run in AWS Lambda using the `GraphiteCheckWebServerLatency` class.   
 Serverless checks are implemented by extending the `ServerlessExecutor` abstract class.   
-In this example the serverless check executor expects expects additional metadata
-which is provided via the `additional` property.
+In this example the serverless check executor expects additional metadata which is 
+provided via the `additional` property.
 
 The core concepts of creating checks consist of:
 
@@ -270,9 +270,9 @@ class EmailNotificationHandler : NotificationHandler() {
                 .withMessage(Message(
                         Content("${checkResult.status} - ${checkResult.source} - ${check.notification}"),
                         Body(Content("""
-                            Message:  ${check.notification}
-                            Source:   ${checkResult.source}
-                            Status:   ${checkResult.status}
+                            Message:    ${check.notification}
+                            Source:     ${checkResult.source}
+                            Status:     ${checkResult.status}
                             Timestamp:  ${checkResult.completedAt}
 
                             Output:

@@ -251,6 +251,7 @@ internal class Deploy : Runnable {
                 "notificationHandlerParameterPath" to notificationHandlerParameterPath(environment),
                 // Functions
                 "clientRegistrationHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientRegistration.name}",
+                "clientDeregistrationHandler" to "${parent.app::class.java.canonicalName}::${parent.app::clientDeregistration.name}",
                 "checkSchedulerHandler" to "${parent.app::class.java.canonicalName}::${parent.app::checkScheduler.name}",
                 "checkResultReceiver" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultReceiver.name}",
                 "notificationProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::notificationProcessor.name}",

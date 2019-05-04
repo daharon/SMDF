@@ -21,8 +21,7 @@ import us.aharon.smdf.core.checks.CheckGroup
 import us.aharon.smdf.core.cli.Base
 import us.aharon.smdf.core.di.modules
 import us.aharon.smdf.core.filters.Filter
-import us.aharon.smdf.core.backend.messages.ClientRegistrationRequest
-import us.aharon.smdf.core.backend.messages.ClientRegistrationResponse
+import us.aharon.smdf.core.backend.messages.*
 import us.aharon.smdf.core.mutators.Mutator
 
 
@@ -45,6 +44,7 @@ abstract class Application : KoinComponent {
     protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
 
     private val _clientRegistration by lazy { ClientRegistration() }
+    private val _clientDeregistration by lazy { ClientDeregistration() }
     private val _checkScheduler by lazy { CheckScheduler() }
     private val _databaseStreamProcessor by lazy { DatabaseStreamProcessor() }
     private val _checkResultReceiver by lazy { CheckResultReceiver() }
@@ -81,9 +81,20 @@ abstract class Application : KoinComponent {
      *   re-create the queue and subscription.  The [us.aharon.smdf.core.backend.ClientCleanup] handler will
      *   deal with any cleanup that is necessary.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun clientRegistration(event: ClientRegistrationRequest, context: Context): ClientRegistrationResponse {
         log.debug { "Received event:  $event" }
         return this._clientRegistration.run(event)
+    }
+
+    /**
+     * Handler that marks a client as in-active.
+     * Cleanup of the client's resources will be handled by [ClientCleanup].
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun clientDeregistration(event: ClientDeregistrationRequest, context: Context): ClientDeregistrationResponse {
+        log.debug { "Received event:  $event" }
+        return _clientDeregistration.run(event)
     }
 
     /**
@@ -94,6 +105,7 @@ abstract class Application : KoinComponent {
      *
      * Requires the ARN of the SNS Check Fanout topic.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun checkScheduler(event: ScheduledEvent, context: Context) {
         log.debug { "Received event:  $event" }
         this._checkScheduler.run(event.time, this.checks)
@@ -102,6 +114,7 @@ abstract class Application : KoinComponent {
     /**
      * Receive scheduled check results and save to database.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun checkResultReceiver(event: SQSEvent, context: Context) {
         log.debug { "Received ${event.records.size} SQS messages." }
         if (log.isDebugEnabled) {
@@ -116,6 +129,7 @@ abstract class Application : KoinComponent {
      * - Process check results.
      * - Process client changes.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun databaseStreamProcessor(event: DynamodbEvent, context: Context) {
         log.debug { "DynamoDB stream event: $event" }
         this._databaseStreamProcessor.run(event, checks)

@@ -32,6 +32,29 @@ Resources:
         - Key: Env
           Value: '${environment}'
 
+  SMDFClientDeregistration:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: De-activate clients of the monitoring system.
+      Runtime: java8
+      Handler: '${clientDeregistrationHandler}'
+      Code:
+        S3Bucket: '${codeS3Bucket}'
+        S3Key: '${codeS3Key}'
+      Role: !GetAtt SMDFClientDeregistrationRole.Arn
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          LOG_LEVEL: '${logLevel}'
+          ENVIRONMENT: '${environment}'
+          DB_TABLE: !Ref SMDFTable
+      Tags:
+        - Key: App
+          Value: SMDF
+        - Key: Env
+          Value: '${environment}'
+
   SMDFDatabaseStreamProcessor:
     Type: AWS::Lambda::Function
     Properties:
@@ -223,6 +246,48 @@ Resources:
                   - sns:Unsubscribe
                 Resource:
                   - !Ref SMDFClientCheckDistributor
+
+  SMDFClientDeregistrationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: '/smdf/${environment}/'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBTable
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                  - dynamodb:BatchGetItem
+                  - dynamodb:GetItem
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt SMDFTable.Arn
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                  - dynamodb:BatchGetItem
+                  - dynamodb:GetItem
+                Resource:
+                  - !Join
+                    - '/'
+                    - - !GetAtt SMDFTable.Arn
+                      - 'index'
+                      - 'pk-data-index'
 
   SMDFDatabaseStreamProcessorRole:
     Type: AWS::IAM::Role
@@ -642,11 +707,21 @@ Resources:
                     - ''
                     - - 'parameter'
                       - !Ref SMDFClientRegistrationParameter
+              - !Join
+                - ':'
+                - - 'arn:aws:ssm'
+                  - !Ref 'AWS::Region'
+                  - !Ref 'AWS::AccountId'
+                  - !Join
+                    - ''
+                    - - 'parameter'
+                      - !Ref SMDFClientDeregistrationParameter
           - Effect: Allow
             Action:
               - lambda:InvokeFunction
             Resource:
               - !GetAtt SMDFClientRegistration.Arn
+              - !GetAtt SMDFClientDeregistration.Arn
           # Receiving check messages.
           - Effect: Allow
             Action:
@@ -678,6 +753,14 @@ Resources:
       Name: '/${environment}/smdf/registration'
       Type: String
       Value: !GetAtt SMDFClientRegistration.Arn
+
+  SMDFClientDeregistrationParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Client de-registration function ARN.
+      Name: '/${environment}/smdf/de-registration'
+      Type: String
+      Value: !GetAtt SMDFClientDeregistration.Arn
 
   ##
   # Scheduled Events
