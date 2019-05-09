@@ -9,6 +9,7 @@ import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
 import com.amazonaws.services.cloudformation.model.*
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import freemarker.template.Configuration as TemplateConfiguration
+import picocli.CommandLine.ArgGroup
 import picocli.CommandLine.ParentCommand
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
@@ -77,7 +78,29 @@ internal class Deploy : Runnable {
             required = false)
     private var logLevel: String = "INFO"
 
+    @ArgGroup(heading = "VPC", exclusive = false)
+    private var vpc: Vpc = Vpc()
+
     companion object {
+        /**
+         * Co-dependent VPC options.
+         */
+        private class Vpc {
+            @Option(names = ["--security-group-ids"],
+                    paramLabel = "SECURITY_GROUP",
+                    description = ["List of security group IDs for notification and serverless check functions."],
+                    split = ",",
+                    required = true)
+            var securityGroups: MutableList<String> = mutableListOf()
+
+            @Option(names = ["--subnet-ids"],
+                    paramLabel = "SUBNET",
+                    description = ["List of subnet IDs for notification and serverless check functions."],
+                    split = ",",
+                    required = true)
+            var subnets: MutableList<String> = mutableListOf()
+        }
+
         /**
          * CloudFormation template filename from the package's resources directory.
          */
@@ -256,7 +279,10 @@ internal class Deploy : Runnable {
                 "checkResultReceiver" to "${parent.app::class.java.canonicalName}::${parent.app::checkResultReceiver.name}",
                 "notificationProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::notificationProcessor.name}",
                 "serverlessCheckProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::serverlessCheckProcessor.name}",
-                "databaseStreamProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::databaseStreamProcessor.name}"
+                "databaseStreamProcessor" to "${parent.app::class.java.canonicalName}::${parent.app::databaseStreamProcessor.name}",
+                // VPC
+                "securityGroups" to vpc.securityGroups,
+                "subnets" to vpc.subnets
         )
         val renderedTemplate = StringWriter()
         templateCfn.process(templateData, renderedTemplate)

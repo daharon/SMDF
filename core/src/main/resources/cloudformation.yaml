@@ -140,6 +140,17 @@ Resources:
       Timeout: 300
       # Maximum memory size, since this will run non-core code.
       MemorySize: 3008
+      <#if securityGroups?has_content && subnets?has_content>
+      VpcConfig:
+        SecurityGroupIds:
+          <#list securityGroups as securityGroup>
+          - '${securityGroup}'
+          </#list>
+        SubnetIds:
+          <#list subnets as subnet>
+          - '${subnet}'
+          </#list>
+      </#if>
       Environment:
         Variables:
           LOG_LEVEL: '${logLevel}'
@@ -165,6 +176,17 @@ Resources:
       Timeout: 300
       # Maximum memory size, since this will run non-core code.
       MemorySize: 3008
+      <#if securityGroups?has_content && subnets?has_content>
+      VpcConfig:
+        SecurityGroupIds:
+          <#list securityGroups as securityGroup>
+          - '${securityGroup}'
+          </#list>
+        SubnetIds:
+          <#list subnets as subnet>
+          - '${subnet}'
+          </#list>
+      </#if>
       Environment:
         Variables:
           LOG_LEVEL: '${logLevel}'
@@ -442,6 +464,7 @@ Resources:
       Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaENIManagementAccess
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -496,6 +519,7 @@ Resources:
       Path: '/smdf/${environment}/'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaENIManagementAccess
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:

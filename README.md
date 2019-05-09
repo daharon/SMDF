@@ -292,7 +292,7 @@ class EmailNotificationHandler : NotificationHandler() {
 The monitoring application is designed to compile to a single fat JAR which can 
 deploy itself.   
 ```
-Usage: java -jar app.jar deploy [-hV] [--dry-run] -d=DEST -e=ENV -n=NAME -r=REGION
+Usage: java -jar app.jar deploy [--security-group-ids=SECURITY_GROUP[,SECURITY_GROUP...]] [--subnet-ids=SUBNET[,SUBNET...]] [-hV] [--dry-run] -d=DEST -e=ENV [-l=LEVEL] -n=NAME -r=REGION
 Deploy application to the cloud
       --dry-run           Generate and validate the CloudFormation template without
                             installing the application
@@ -301,9 +301,17 @@ Deploy application to the cloud
   -e, --environment=ENV   A name given to the environment for this application (prd,
                             dev, ...)
   -h, --help              Show this help message and exit.
+  -l, --log-level=LEVEL   Log level (TRACE, DEBUG, ERROR, WARN, INFO)
   -n, --stack-name=NAME   CloudFormation Stack name
   -r, --region=REGION     AWS region
   -V, --version           Print version information and exit.
+VPC      
+      --security-group-ids=SECURITY_GROUP[,SECURITY_GROUP...]
+                          List of security group IDs for notification and serverless
+                            check functions.
+      --subnet-ids=SUBNET[,SUBNET...]
+                          List of subnet IDs for notification and serverless check
+                            functions.
 ```
 An example invocation of the `deploy` CLI command would look like this:
 ```
@@ -329,7 +337,7 @@ Stack `mon-dev` status:  CREATE_COMPLETE
     - The Policy and Role should have fixed names.
 - [ ] Implement `occurrences` notification handling.
     - Only send notification if _x_ number of warning/critical/unknown have occurred in sequence.
-- [ ] VPC support.
+- [x] VPC support.
     - Probably only the notification handlers and serverless checks will need to run within the VPC.
 - [ ] CloudWatch alarm for Lambda errors.
 - [ ] HTTP API.

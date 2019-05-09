@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>smdf-example</artifactId>
-    <version>0.4.63</version>
+    <version>0.4.67</version>
     <packaging>jar</packaging>
 
     <name>Serverless Monitoring Development Framework - Example</name>
