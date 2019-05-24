@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>smdf-example</artifactId>
-    <version>0.4.67</version>
+    <version>0.4.68</version>
     <packaging>jar</packaging>
 
     <name>Serverless Monitoring Development Framework - Example</name>
@@ -33,13 +33,13 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-iam</artifactId>
-            <version>1.11.490</version>
+            <version>1.11.559</version>
         </dependency>
         <!-- Used by a notification handler -->
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-ses</artifactId>
-            <version>1.11.490</version>
+            <version>1.11.559</version>
         </dependency>
 
     </dependencies>
@@ -91,10 +91,11 @@
                                     <mainClass>${main.class}</mainClass>
                                 </manifest>
                             </archive>
+                            <finalName>${project.artifactId}-fat</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
-                            <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>
                 </executions>

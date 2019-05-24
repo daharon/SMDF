@@ -19,7 +19,8 @@ import us.aharon.smdf.core.checks.notificationHandlerPermissions
 import us.aharon.smdf.core.checks.serverlessExecutorParameterPath
 import us.aharon.smdf.core.checks.serverlessExecutorPermissions
 import us.aharon.smdf.core.util.getJarAbsolutePath
-import us.aharon.smdf.core.util.getJarFilename
+import us.aharon.smdf.core.util.getJarFile
+import us.aharon.smdf.core.util.toMd5HexString
 
 import java.io.StringWriter
 import java.io.File
@@ -78,7 +79,7 @@ internal class Deploy : Runnable {
             required = false)
     private var logLevel: String = "INFO"
 
-    @ArgGroup(heading = "VPC", exclusive = false)
+    @ArgGroup(heading = "VPC%n", exclusive = false)
     private var vpc: Vpc = Vpc()
 
     companion object {
@@ -111,8 +112,10 @@ internal class Deploy : Runnable {
      * Deploy the application to the cloud.
      */
     override fun run() {
+        // Get MD5 hash of the JAR file and use it as the filename on S3.
+        val jarS3Filename = "${getJarFile(parent.app::class).toMd5HexString()}.jar"
         // Generate/render CloudFormation template.
-        val cfnTemplate = renderCloudFormationTemplate()
+        val cfnTemplate = renderCloudFormationTemplate(jarS3Filename)
         println("Rendered CloudFormation Template:")
         println(cfnTemplate)
 
@@ -121,11 +124,11 @@ internal class Deploy : Runnable {
 
         if (!dryRun) {
             // Upload JAR to S3 bucket specified in command-line parameter.
-            uploadJarFile()
+            uploadJarFile(jarS3Filename)
 
             // Upload CloudFormation template to S3 bucket.
             val cfnTemplateS3Key = uploadCloudFormationTemplate(cfnTemplate)
-            TimeUnit.SECONDS.sleep(5)  // Wait for S3, just in case.
+            TimeUnit.SECONDS.sleep(1)  // Wait for S3, just in case.
 
             // Create or update CloudFormation stack.  Stack name provided by command-line parameter.
             createCloudFormationStack(cfnTemplateS3Key)
@@ -142,8 +145,9 @@ internal class Deploy : Runnable {
         val cfnClient = AmazonCloudFormationClientBuilder.standard()
                 .withRegion(region)
                 .build()
+        val stackReq = DescribeStacksRequest().withStackName(stackName)
         while (true) {
-            val stacksResult = cfnClient.describeStacks()
+            val stacksResult = cfnClient.describeStacks(stackReq)
             val stack = stacksResult.stacks.firstOrNull()
             if (stack == null) {
                 println("Stack `$stackName` not found.")
@@ -186,7 +190,7 @@ internal class Deploy : Runnable {
     /**
      * Create or update the CloudFormation stack.
      *
-     * @param template The S3 file that contains the CloudFormation template.
+     * @param template The S3 file/key that contains the CloudFormation template.
      */
     private fun createCloudFormationStack(template: String) {
         val cfnClient = AmazonCloudFormationClientBuilder.standard()
@@ -201,7 +205,7 @@ internal class Deploy : Runnable {
             println("The `$stackName` stack does not exist.")
             false
         }
-        val templateUrl = "https://s3.amazonaws.com/${s3Dest.bucket}/$template"
+        val templateUrl = "https://${s3Dest.bucket}.s3.amazonaws.com/$template"
         println("Template URL:  $templateUrl")
         if (stackExists) {
             val updateRequest = UpdateStackRequest()
@@ -227,8 +231,8 @@ internal class Deploy : Runnable {
      * @return Template S3 path/key.
      */
     private fun uploadCloudFormationTemplate(template: String): String {
-        val templateKey = "${s3Dest.path}/cfn-template-$environment-${System.currentTimeMillis()}.yaml"
-        println("Uploading $templateKey")
+        val templateKey = "${s3Dest.path}/$environment-${template.toMd5HexString()}.yaml"
+        println("Uploading CloudFormation template to s3://${s3Dest.bucket}/$templateKey ...")
         val s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(region)
                 .build()
@@ -239,10 +243,10 @@ internal class Deploy : Runnable {
     /**
      * Upload the JAR file.
      */
-    private fun uploadJarFile() {
+    private fun uploadJarFile(jarFilename: String) {
         val jarPath = getJarAbsolutePath(parent.app::class)
-        val jarKey = "${s3Dest.path}/${getJarFilename(parent.app::class)}"
-        println("Uploading $jarPath")
+        val jarKey = "${s3Dest.path}/$jarFilename"
+        println("Uploading $jarPath to s3://${s3Dest.bucket}/$jarKey ...")
         val s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(region)
                 .build()
@@ -254,7 +258,7 @@ internal class Deploy : Runnable {
      *
      * @return CloudFormation YAML template.
      */
-    private fun renderCloudFormationTemplate(): String {
+    private fun renderCloudFormationTemplate(jarFilename: String): String {
         val templateConfig = TemplateConfiguration(TemplateConfiguration.VERSION_2_3_28).apply {
             setClassForTemplateLoading(this@Deploy.parent.app::class.java, "/")
             defaultEncoding = "UTF-8"
@@ -265,7 +269,7 @@ internal class Deploy : Runnable {
                 "logLevel" to logLevel.toUpperCase(),
                 // Code
                 "codeS3Bucket" to s3Dest.bucket,
-                "codeS3Key" to "${s3Dest.path}/${getJarFilename(parent.app::class)}",
+                "codeS3Key" to "${s3Dest.path}/$jarFilename",
                 // Serverless check executor permissions
                 "serverlessExecutorPermissions" to parent.app.checks.serverlessExecutorPermissions(),
                 "serverlessExecutorParameterPath" to serverlessExecutorParameterPath(environment),
