@@ -11,8 +11,8 @@ import com.amazonaws.services.sqs.model.SendMessageRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KLogger
 import org.koin.core.parameter.parametersOf
-import org.koin.standalone.KoinComponent
-import org.koin.standalone.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 import us.aharon.smdf.core.checks.CheckGroup
 import us.aharon.smdf.core.checks.getCheck

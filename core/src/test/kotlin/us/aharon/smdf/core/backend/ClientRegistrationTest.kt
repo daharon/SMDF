@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.Extensions
-import org.koin.standalone.inject
+import org.koin.test.inject
 import org.koin.test.KoinTest
 
 import us.aharon.smdf.core.backend.messages.ClientRegistrationRequest

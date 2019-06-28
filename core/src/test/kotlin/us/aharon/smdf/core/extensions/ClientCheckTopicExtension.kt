@@ -8,7 +8,7 @@ import com.amazonaws.services.sns.AmazonSNS
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.koin.standalone.inject
+import org.koin.test.inject
 import org.koin.test.KoinTest
 
 

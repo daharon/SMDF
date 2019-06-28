@@ -9,8 +9,8 @@ import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import mu.KLogger
 import org.koin.core.parameter.parametersOf
-import org.koin.standalone.KoinComponent
-import org.koin.standalone.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 import us.aharon.smdf.core.checks.CheckGroup
 import us.aharon.smdf.core.db.CheckResultRecord

@@ -10,8 +10,8 @@ import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
 import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest
 import mu.KLogger
 import org.koin.core.parameter.parametersOf
-import org.koin.standalone.KoinComponent
-import org.koin.standalone.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 
 internal interface AssumeRoleable {

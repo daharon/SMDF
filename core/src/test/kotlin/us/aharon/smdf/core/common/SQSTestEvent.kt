@@ -8,8 +8,8 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.amazonaws.util.Md5Utils
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.koin.standalone.KoinComponent
-import org.koin.standalone.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 import java.time.ZonedDateTime
 import java.util.UUID

@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.Extensions
-import org.koin.standalone.inject
+import org.koin.test.inject
 import org.koin.test.KoinTest
 
 import us.aharon.smdf.core.api.check
@@ -35,11 +35,11 @@ import kotlin.test.assertNull
 class CheckSchedulerTest : KoinTest {
 
     @Nested
-    @Extensions(
-        ExtendWith(LocalstackExtension::class),
-        ExtendWith(LoadModulesExtension::class),
-        ExtendWith(ClientCheckTopicExtension::class),
-        ExtendWith(ServerlessCheckQueueExtension::class))
+    @ExtendWith(
+        LocalstackExtension::class,
+        LoadModulesExtension::class,
+        ClientCheckTopicExtension::class,
+        ServerlessCheckQueueExtension::class)
     inner class ClientChecks {
 
         @Test

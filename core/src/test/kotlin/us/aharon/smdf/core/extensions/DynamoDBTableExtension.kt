@@ -9,7 +9,7 @@ import com.amazonaws.services.dynamodbv2.model.*
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.koin.standalone.inject
+import org.koin.test.inject
 import org.koin.test.KoinTest
 
 import us.aharon.smdf.core.db.DATA_ACTIVE_INDEX

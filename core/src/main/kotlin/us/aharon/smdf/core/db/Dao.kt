@@ -7,8 +7,8 @@ package us.aharon.smdf.core.db
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import org.koin.standalone.KoinComponent
-import org.koin.standalone.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 import us.aharon.smdf.core.handlers.NotificationHandler
 

@@ -6,8 +6,8 @@ package us.aharon.smdf.core.db
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException
-import org.koin.standalone.KoinComponent
-import org.koin.standalone.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 import us.aharon.smdf.core.util.Env
 

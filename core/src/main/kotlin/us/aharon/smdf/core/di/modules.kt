@@ -19,7 +19,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import mu.KLogger
 import mu.KotlinLogging
-import org.koin.dsl.module.module
+import org.koin.dsl.module
 
 import us.aharon.smdf.core.db.Dao
 import us.aharon.smdf.core.db.TableNameResolver

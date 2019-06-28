@@ -9,11 +9,11 @@ import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import mu.KLogger
+import org.koin.Logger.SLF4JLogger
+import org.koin.core.KoinComponent
+import org.koin.core.context.startKoin
+import org.koin.core.get
 import org.koin.core.parameter.parametersOf
-import org.koin.log.Logger.SLF4JLogger
-import org.koin.standalone.KoinComponent
-import org.koin.standalone.StandAloneContext.startKoin
-import org.koin.standalone.inject
 import picocli.CommandLine
 
 import us.aharon.smdf.core.backend.*
@@ -41,7 +41,7 @@ abstract class Application : KoinComponent {
     abstract val filters: List<Filter>
     abstract val mutators: List<Mutator>
 
-    protected val log: KLogger by inject { parametersOf(this::class.java.simpleName) }
+    protected val log: KLogger
 
     private val _clientRegistration by lazy { ClientRegistration() }
     private val _clientDeregistration by lazy { ClientDeregistration() }
@@ -53,7 +53,11 @@ abstract class Application : KoinComponent {
 
 
     init {
-        startKoin(listOf(modules), logger = SLF4JLogger())
+        startKoin {
+            modules(modules)
+            logger(SLF4JLogger())
+        }
+        log = get { parametersOf(this::class.simpleName) }
     }
 
     /**

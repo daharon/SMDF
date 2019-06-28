@@ -30,7 +30,7 @@ import io.mockk.every
 import io.mockk.spyk
 import mu.KLogger
 import mu.KotlinLogging
-import org.koin.dsl.module.module
+import org.koin.dsl.module
 
 import us.aharon.smdf.core.common.FAKE_SNS_SUBSCRIPTION_ARN
 import us.aharon.smdf.core.db.*
