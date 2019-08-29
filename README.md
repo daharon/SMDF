@@ -369,5 +369,6 @@ Stack `mon-dev` status:  CREATE_COMPLETE
 - [ ] Web UI.
 - [x] Implement check timeouts.
 - [ ] Implement flapping detection.
+    - https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/flapping.html
 - [ ] Implement `volatile` checks.
     - Checks which are not scheduled by the backend, but instead reported asynchronously by the client.
