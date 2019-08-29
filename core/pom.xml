@@ -17,7 +17,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <aws.java.sdk.version>1.11.559</aws.java.sdk.version>
+        <aws.java.sdk.version>1.11.621</aws.java.sdk.version>
         <koin.version>2.0.1</koin.version>
     </properties>
 

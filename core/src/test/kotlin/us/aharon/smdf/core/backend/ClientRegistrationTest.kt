@@ -42,10 +42,22 @@ class ClientRegistrationTest {
             assert(registrationResponse.commandQueue.isNotEmpty())
             assert(registrationResponse.resultQueue.isNotEmpty())
 
+            // Verify that the client details were written to the database.
             val db: Dao by inject()
             val client = db.getClient(clientName)
             assertNotNull(client)
             assertEquals(registrationResponse.commandQueue, client.queueUrl)
+
+            // Verify that the client command queue is tagged correctly.
+            // FIXME: The Localstack SQS implementation does not support tagging, yet.
+            /*
+            val sqs: AmazonSQS by inject()
+            val env: Env by inject()
+            val queueTags = sqs.listQueueTags(client.queueUrl)
+            assertEquals("SMDF", queueTags.tags["App"])
+            assertEquals(env.get("ENVIRONMENT"), queueTags.tags["Env"])
+            assertEquals(clientName, queueTags.tags["Client"])
+            */
         }
 
         @Test

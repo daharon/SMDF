@@ -138,12 +138,11 @@ internal class ClientRegistration : KoinComponent {
         log.debug { "Generated queue name:  $queueName" }
         val queueRequest = CreateQueueRequest(queueName)
                 .withAttributes(mapOf("MessageRetentionPeriod" to MESSAGE_RETENTION_PERIOD.toString()))
+                .withTags(mapOf(
+                        "App" to "SMDF",
+                        "Env" to ENVIRONMENT,
+                        "Client" to name))
         val queueResult = sqs.createQueue(queueRequest)
-        // Assign tags to the queue.
-        sqs.tagQueue(queueResult.queueUrl, mapOf(
-                "App" to "SMDF",
-                "Env" to ENVIRONMENT,
-                "Client" to name))
         // Get queue ARN.  For some reason this is not returned in the createQueue() result.
         val queueAttrRequest = GetQueueAttributesRequest(queueResult.queueUrl)
                 .withAttributeNames("QueueArn")
