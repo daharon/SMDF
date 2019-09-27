@@ -5,7 +5,11 @@
 package us.aharon.smdf.core.di
 
 import com.amazonaws.ClientConfiguration
+import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.auth.AWSStaticCredentialsProvider
+import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.client.builder.AwsClientBuilder
+import com.amazonaws.regions.Regions
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
@@ -49,6 +53,10 @@ private const val LOCALSTACK_DYNAMODB_PORT = 4569
  *     - https://github.com/localstack/localstack
  */
 internal val modules = module {
+    single<AWSCredentialsProvider> {
+        val credentials = BasicAWSCredentials("abc123", "abc123")
+        AWSStaticCredentialsProvider(credentials)
+    }
     single<Env> { Env(TEST_ENVIRONMENT_VARIABLES) }
     factory<KLogger> { (name: String) -> KotlinLogging.logger(name) }
     single<ObjectMapper> {
@@ -57,7 +65,7 @@ internal val modules = module {
                 .registerKotlinModule()
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     }
-    single<AmazonSNS> { mockedAmazonSNS() }
+    single<AmazonSNS> { mockedAmazonSNS(get()) }
     single<AmazonSQS> { mockedAmazonSQS() }
     single<DynamoDBMapper> {
         val config = DynamoDBMapperConfig.builder()
@@ -76,11 +84,12 @@ internal val modules = module {
     }
     single<AmazonDynamoDB> {
         AmazonDynamoDBClientBuilder.standard()
+                .withCredentials(get())
                 .withEndpointConfiguration(
                         AwsClientBuilder.EndpointConfiguration("http://localhost:$LOCALSTACK_DYNAMODB_PORT", "us-east-1"))
                 .build()
     }
-    single<AWSSimpleSystemsManagement> { mockedAWSSimpleSystemsManagement() }
+    single<AWSSimpleSystemsManagement> { mockedAWSSimpleSystemsManagement(get()) }
     single<Dao> { Dao() }
 }
 
@@ -97,9 +106,10 @@ private fun mockedAmazonSQS(): AmazonSQS {
 /**
  * Mock the [AmazonSNS] class because some functionality is not provided by LocalStack.
  */
-private fun mockedAmazonSNS(): AmazonSNS {
+private fun mockedAmazonSNS(credentials: AWSCredentialsProvider): AmazonSNS {
     val sns: AmazonSNS = spyk(
             AmazonSNSClientBuilder.standard()
+                    .withCredentials(credentials)
                     .withClientConfiguration(
                             ClientConfiguration()
                                     .withConnectionTimeout(10_000)
@@ -116,9 +126,12 @@ private fun mockedAmazonSNS(): AmazonSNS {
 /**
  * Mock the [AWSSimpleSystemsManagement] class because it doesn't work locally.
  */
-private fun mockedAWSSimpleSystemsManagement(): AWSSimpleSystemsManagement {
+private fun mockedAWSSimpleSystemsManagement(credentials: AWSCredentialsProvider): AWSSimpleSystemsManagement {
     val ssm: AWSSimpleSystemsManagement = spyk(
-            AWSSimpleSystemsManagementClientBuilder.defaultClient())
+            AWSSimpleSystemsManagementClientBuilder.standard()
+                    .withCredentials(credentials)
+                    .withRegion(Regions.US_EAST_1)
+                    .build())
     every { ssm.getParameter(any()) } returns GetParameterResult().withParameter(Parameter().withValue(""))
     return ssm
 }
